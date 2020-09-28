@@ -2,8 +2,8 @@
 
 Collection of scripts to solve the detection-tracking-counting problem. 
 The algorithm makes use of YOLOv5 for detection, of SORT for tracking and
-of the DNN to count unique people from the set of snapshots (the later is not 
-currently implemented).
+of the DNN to count the number of unique people from the set of snapshots
+(the latter is not currently implemented).
 
 ## Content
 
