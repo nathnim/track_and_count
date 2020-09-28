@@ -5,6 +5,8 @@ The algorithm makes use of YOLOv5 for detection, of SORT for tracking and
 of the DNN to count the number of unique people from the set of snapshots
 (the latter is not currently implemented).
 
+![Gif example](https://github.com/maxmarkov/track_and_count/blob/master/example/tracker_example.gif)
+
 ## Content
 
 - detect_and_track_yolov5_sort.py is the implementation of detect+track task
