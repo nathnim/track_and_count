@@ -25,6 +25,7 @@ of the DNN to count the number of unique people from the set of snapshots
 - [Real time multiple camera person detection and tracking](https://repositorio.iscte-iul.pt/handle/10071/17743)
 - [Kalman and Bayesian Filters in Python (pdf)](https://elec3004.uqcloud.net/2015/tutes/Kalman_and_Bayesian_Filters_in_Python.pdf)
 - [Kalman and Bayesian Filters in Python (codes)](https://github.com/rlabbe/Kalman-and-Bayesian-Filters-in-Python)
+- [Deep Cosine Metric Learning for Person Re-Identification](https://elib.dlr.de/116408/1/WACV2018.pdf)
 
 ## Codes
 
