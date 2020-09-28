@@ -62,7 +62,7 @@ def detect(save_img=False):
     colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(names))]
 
     # SORT: initialize the tracker
-    mot_tracker = sort_module.Sort()
+    mot_tracker = sort_module.Sort(max_age=opt.max_age, min_hits=opt.min_hits, iou_threshold=opt.iou_threshold)
 
     # Run inference
     t0 = time.time()
@@ -178,6 +178,12 @@ if __name__ == '__main__':
     parser.add_argument('--agnostic-nms', action='store_true', help='class-agnostic NMS')
     parser.add_argument('--augment', action='store_true', help='augmented inference')
     parser.add_argument('--update', action='store_true', help='update all models')
+    parser.add_argument('--max_age', type=int, default=10, help='Maximum number of frames to keep alive a track without associated detections.')
+    parser.add_argument("--min_hits",
+                        help="Minimum number of associated detections before track is initialised.",
+                        type=int, default=10)
+    parser.add_argument("--iou_threshold", help="Minimum IOU for match (SORT).", type=float, default=0.3)
+
     opt = parser.parse_args()
     print(opt)
 

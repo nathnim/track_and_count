@@ -13,4 +13,4 @@ pip3 install -r requirements.txt
 
 4. Run the tracker on a sample video
 cd ../yolov5
-python3 detect_and_track_yolov5_sort.py --source ../track_and_count/example/running.mp4 --weights weights/yolov5s.pt --conf 0.4 
+python3 detect_and_track_yolov5_sort.py --source ../track_and_count/example/running.mp4 --weights weights/yolov5s.pt --conf 0.4 --max_age 50 --min_hits 10 --iou_threshold 0.3 
