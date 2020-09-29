@@ -107,7 +107,8 @@ def detect(save_img=False):
                     s += '%g %ss, ' % (n, names[int(c)])  # add to string
                     # SORT: number of people detected
                     if names[int(c)] == 'person':
-                        idx_ppl = where((det[:, -1] == c)==True)[0].cpu().tolist()  # 1. List of indices with 'person' class detections
+                        print(type(det))
+                        idx_ppl = where((det[:, -1].cpu() == c)==True)[0].tolist()  # 1. List of indices with 'person' class detections
                         det_people = det[idx_ppl,:-1]                         # 2. Torch.tensor with 'person' detections
                         num_people = int(n)                                   # 3. Let me know how many people were detected in the frame
                         print(num_people, ' people were detected!')
