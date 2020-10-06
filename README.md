@@ -40,10 +40,10 @@ tracker on **Google Colab**.
 ![Gif example](https://github.com/maxmarkov/track_and_count/blob/master/example/tracker_example.gif)
 
 The SORT tracker is written with numpy which creates problems in inference on GPU. In this case 
-one can run the tracker on CPU only. A nice alternative to the SORT tracker is a [Deep SORT](https://arxiv.org/pdf/1703.07402.pdf)
+one can run the tracker on CPU only. A nice alternative to the SORT tracker is a [Deep SORT](https://arxiv.org/pdf/1703.07402.pdf).
 **The Deep SORT** extends the SORT tracker adding a deep association metric to build an appearance model in addition to the motion
 model. According to the authors, this extension enables to track objects through longer periods of occlusions, effectively reducing
-the number of identitys witches. Here I do not aim to implement this tracker into 
+the number of identity switches. Here I do not aim to implement this tracker into 
 the inference script since such [implementations already exist](https://github.com/mikel-brostrom/Yolov5_DeepSort_Pytorch).
 But we use this implementation to see how it works for our problem (currently in progress).
 
@@ -67,20 +67,25 @@ predefined **parameters**:
 
 The person whose motion satisfies the conditions defined above can be then tracked until he/she dissapears from the camera view. The 
 tracking is necessary in case the person stays in a room hanging around for a while. To further insure that we count the unique people only,
-one can save an image of each tracked person inside the bound box building a database of voters in a video. When the datebase of voters for a 
-given video is built, one can run a neural network to find the unique voters based on their appearance similarity.     
+one can save an image of each tracked person inside the bound box building a database of voters in a video. When the dateset of images with
+voters is built, one can run a neural network to find the unique voters based on their appearance similarity.     
 
 **TO DO:**
 - Think about the intersection of units (IoU) in support/in instead of the critical radius
 - Create a set of bbox snapshots for each ID
 - **Counter**: NN to identify the number of unique people from the dataset
 
+## Theory
+
+In order to avoid the fit-predict style of the project, I try to understanid the theory behind the modern trackers and detectors.
+I summarize this knowledge in the folder "theory" where I have slides and notes on related topics (constantly updated). 
+
 ## Literature
 
 - [Simple Online and Realtime Tracking (SORT)](https://arxiv.org/abs/1602.00763)
 - [Simple Online and Realtime Tracking with a Deep Association Metric (Deep SORT)](https://arxiv.org/pdf/1703.07402.pdf)
 - [Real-Time Multiple Object Tracking: A Study on the Importance of Speed by S.Murray](https://arxiv.org/pdf/1709.03572.pdf)
-- [Real time multiple camera person detection and tracking](https://repositorio.iscte-iul.pt/handle/10071/17743)
+- [Real time multiple camera person detection and tracking by D. Baikova](https://repositorio.iscte-iul.pt/handle/10071/17743)
 - [Kalman and Bayesian Filters in Python (pdf)](https://elec3004.uqcloud.net/2015/tutes/Kalman_and_Bayesian_Filters_in_Python.pdf)
 - [Kalman and Bayesian Filters in Python (codes)](https://github.com/rlabbe/Kalman-and-Bayesian-Filters-in-Python)
 - [Deep Cosine Metric Learning for Person Re-Identification](https://elib.dlr.de/116408/1/WACV2018.pdf)
@@ -88,11 +93,9 @@ given video is built, one can run a neural network to find the unique voters bas
 ## Codes
 
 - [SORT](https://github.com/abewley/sort)
-- [Deep SORT (TF)](https://github.com/nwojke/deep_sort)
-- [Deep SORT (PyTorch)](https://github.com/ZQPei/deep_sort_pytorch)
+- [Deep SORT (TF)](https://github.com/nwojke/deep_sort), [Deep SORT (PyTorch)](https://github.com/ZQPei/deep_sort_pytorch)
 - [YOLOv5+DeepSORT](https://github.com/mikel-brostrom/Yolov5_DeepSort_Pytorch)
-- [YOLOv4](https://github.com/AlexeyAB/darknet)
-- [YOLOv4 PyTorch](https://github.com/Tianxiaomo/pytorch-YOLOv4)
+- [YOLOv4](https://github.com/AlexeyAB/darknet), [YOLOv4 PyTorch](https://github.com/Tianxiaomo/pytorch-YOLOv4)
 - [YOLOv5](https://github.com/ultralytics/yolov5)
 - [FilterPy library (the Kalman filter)](https://filterpy.readthedocs.io/en/latest/)
 
