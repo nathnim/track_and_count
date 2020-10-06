@@ -36,6 +36,9 @@ of the object's appearence. My implementation of the SORT tracker inside the YOL
 *detect_and_track_yolov5_sort.py* Jupyter notebook *run_tracker_on_colab.ipynb* shows how to run the
 tracker on **Google Colab**.
 
+**Example of tracking in a room using SORT and YOLOv5**
+![Gif example](https://github.com/maxmarkov/track_and_count/blob/master/example/tracker_example.gif)
+
 The SORT tracker is written with numpy which creates problems in inference on GPU. In this case 
 one can run the tracker on CPU only. A nice alternative to the SORT tracker is a [Deep SORT](https://arxiv.org/pdf/1703.07402.pdf)
 **The Deep SORT** extends the SORT tracker adding a deep association metric to build an appearance model in addition to the motion
@@ -43,9 +46,6 @@ model. According to the authors, this extension enables to track objects through
 the number of identitys witches. Here I do not aim to implement this tracker into 
 the inference script since such [implementations already exist](https://github.com/mikel-brostrom/Yolov5_DeepSort_Pytorch).
 But we use this implementation to see how it works for our problem (currently in progress).
-
-**Example of tracking in a room with the SORT algorithm and YOLOv5**
-![Gif example](https://github.com/maxmarkov/track_and_count/blob/master/example/tracker_example.gif)
 
 **Content:**
 
@@ -67,8 +67,8 @@ predefined **parameters**:
 
 The person whose motion satisfies the conditions defined above can be then tracked until he/she dissapears from the camera view. The 
 tracking is necessary in case the person stays in a room hanging around for a while. To further insure that we count the unique people only,
-one can save an image of each tracked person inside the bound box building a database of voters in a video. When the datebase of voters is built,
-we can run a neural network to find the unique voters. For this person the Siamese NN could be used.     
+one can save an image of each tracked person inside the bound box building a database of voters in a video. When the datebase of voters for a 
+given video is built, one can run a neural network to find the unique voters based on their appearance similarity.     
 
 **TO DO:**
 - Think about the intersection of units (IoU) in support/in instead of the critical radius
