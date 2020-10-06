@@ -4,8 +4,8 @@ The aim of this project is to count the number of unique people voting in a room
 The project is devided into several steps:
 
 1. Custom object (an urn) detection
-2. people tracking
-3. counting unique people
+2. People tracking
+3. Counting unique people
 
 Each of these tasks is a separate topic itself and could be generalized further to be used for other purposes.
 For instance, tasks 2 and 3 could be employed to count the number of unique customers in a shop etc.  
@@ -16,15 +16,21 @@ The implementation of custom object detection could be found in a folder urn_det
 First, the dataset of urn pictures was collected (see collecting_urn_dataset.doc for details).
 Note that the dataset was already augmented with different brightness levels to simulate the 
 effect of illumination in a room or bad camera settings. The dataset is downloaded with curl.
-Then. yolov5 detector is applied with 2 classes of objects: urn (custom object) and person (coco object). 
-Finaly, the inference is done on a subset of data and the result is visualized.     
+Then, yolov5 detector is applied with 2 classes of objects specified: an urn (custom object) 
+and a person (coco object). The neural network is then fine tuned to learn about the custom 
+object class. Finaly, the inference is done on a subset of data and the result is visualized.     
+
+NB Since an urn is a stationary object (i.e. it position is not supposed to change in time),
+its dectection can be done on a single (initial) video frame. Then, the urn coordinares could
+be passed further to other frames without performing the detection task over and over again. 
 
 ## Track and count
 
-Collection of scripts to solve the detection-tracking-counting problem. 
-The algorithm makes use of YOLOv5 for detection, of SORT for tracking and
-of the DNN to count the number of unique people from the set of snapshots
-(the latter is not currently implemented).
+In the second part we track people in a room using the tracking-by-detection paradigm.
+As it has been done in the custom object detection section above, YOLOv5 performs a person
+detection on each video frame. The detections on different frames must be associated to track the 
+same person. We employ the SORT tracker which combines the Kalman filter to predict the state of the 
+object and the Hungarian algorithm to associate the objects. 
 
 ![Gif example](https://github.com/maxmarkov/track_and_count/blob/master/example/tracker_example.gif)
 
