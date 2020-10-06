@@ -61,7 +61,7 @@ Since our primary task is to count the number of unique voters but not the total
 often just accomany their parents who vote), it is important to define the voting act in a more precise way. Both an urn and voters are
 identified using the YOLOv5 detector which puts a bounding box around each of them. To vote, a person must come close to an urn and 
 spend a certain amount of time around (i.e. the distance between the object centroids must be within a certain critical radius). This 
-"certain amount of time" is necessary to distinguish the people who pass by and the ones who actually vote. This definition requires two
+"certain amount of time" is necessary to distinguish the people who pass by and the ones who actually vote. This approach requires two
 predefined **parameters**: 
 
 - Critical radius
