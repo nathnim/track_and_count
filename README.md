@@ -16,8 +16,8 @@ The implementation of custom object detection could be found in a folder *urn_de
 First, the dataset of urn pictures was collected (see *urn_detection_yolov5/collecting_urn_dataset.doc*
 for details). Note that the dataset has already been augmented with different brightness levels to simulate the 
 effect of illumination in a room and/or bad camera settings. The dataset can be downloaded with curl.
-Then, **YOLOv5 detector** is applied with 2 classes of objects specified: an urn (custom object) 
-and a person (coco object). The neural network is then fine tuned to learn about the custom 
+Then, the **YOLOv5 detector** is applied with 2 classes of objects specified: an urn (a custom object) 
+and a person (a coco object). The neural network is then fine tuned to learn about the custom 
 object class. Finaly, the inference is done on a subset of data and the result is visualized.     
 
 *NB*: Since an urn is a stationary object (i.e. its position is not supposed to change in time),
@@ -44,6 +44,7 @@ the number of identitys witches. Here I do not aim to implement this tracker int
 the inference script since such [implementations already exist](https://github.com/mikel-brostrom/Yolov5_DeepSort_Pytorch).
 But we use this implementation to see how it works for our problem (currently in progress).
 
+**Example of tracking in a room with the SORT algorithm and YOLOv5**
 ![Gif example](https://github.com/maxmarkov/track_and_count/blob/master/example/tracker_example.gif)
 
 **Content:**
@@ -52,10 +53,17 @@ But we use this implementation to see how it works for our problem (currently in
 - run_tracker_on_colab.ipynb shows how to run the tracker on google colab. 
 - folder 'theory' contains the slides with summary of theoretical approaches  
 
-## Voting act
+## Voting. Problem statement.
 
-Since our primary task is to count the number of unique voters, it is important to define the voting act in a more 
-precise way.  
+Since our primary task is to count the number of unique voters but not the total number of people in a room (some people like kids
+often just accomany the people who vote), it is important to define the voting act in a more precise way. Both an urn and voters are
+identified using the YOLOv5 detector which put a bounding box around each of them. To vote, a person must come close to an urn and 
+spend a certain amount of time around it (i.e. the distance between the centroids must be within a certain critical radius). This 
+"certain amount of time" is necessary to differintiate between people who pass by and who actually vote.  
+
+**Parameters**
+- Critical radius
+- Minimum interaction time
 
 ## Unique people counter
 
