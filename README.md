@@ -8,7 +8,10 @@ The project is devided into several steps:
 3. Counting unique people
 
 Each of these tasks is a separate topic itself and could be generalized further to be used for other purposes.
-For instance, tasks 2 and 3 could be employed to count the number of unique customers in a shop etc.  
+For instance, **tasks 2 and 3** could be employed to count the number of unique customers in a shop *etc*.  
+
+![Gif example](https://github.com/maxmarkov/track_and_count/blob/master/example/tracker_example.gif)
+
 
 ## Custom object detection 
 
@@ -31,11 +34,16 @@ As it has been done in the custom object detection section above, **YOLOv5** per
 detection on each single video frame. Then, the detections on different frames must be associated 
 between each other to re-identify the same person. We employ **the SORT tracker** which combines
 the Kalman filter to predict the state of the object and the Hungarian algorithm to associate
-the objects from the previous frames with object in the current frame. My implementation of 
-the SORT tracker inside the YOLOv5 inference script could be found in *detect_and_track_yolov5_sort.py*  
+objects from the previous frames with objects in the current frame. My implementation of 
+the SORT tracker inside the YOLOv5 inference script could be found in *detect_and_track_yolov5_sort.py*
 Jupyter notebook *run_tracker_on_colab.ipynb* shows how to run the tracker on **Google Colab**.
 
-![Gif example](https://github.com/maxmarkov/track_and_count/blob/master/example/tracker_example.gif)
+The SORT tracker is written with numpy which creates problems in inference on GPU. As a result, 
+one can run the tracker on CPU only. A nice alternative to the SORT tracker is a [Deep SORT](https://arxiv.org/pdf/1703.07402.pdf)
+**The Deep SORT** adds a deep association metric to build an appearance model. The appearance 
+features are then added to the motion models. Here we do not aim to implement this tracker into 
+the inference script since such as [implementations already exist](https://github.com/mikel-brostrom/Yolov5_DeepSort_Pytorch).
+But we use this implementation to see how it works for our problem (currently in progress).
 
 **Content:**
 
@@ -43,9 +51,8 @@ Jupyter notebook *run_tracker_on_colab.ipynb* shows how to run the tracker on **
 - run_tracker_on_colab.ipynb shows how to run the tracker on google colab. 
 - folder 'theory' contains the slides with summary of theoretical approaches  
 
-## TO DO:
+## Unique people counter
 
-- Deep SORT+YOLOv5
 - Create a set of bbox snapshots for each ID
 - **Counter**: NN to identify the number of unique people from the dataset
 
