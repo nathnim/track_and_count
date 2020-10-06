@@ -23,7 +23,8 @@ and a person (a coco object). The neural network is then fine tuned to learn abo
 object class. Finaly, the inference is done on a subset of data and the result is visualized. 
 
 **Example of urn detection with YOLOv5**
-<img src="example/urn_detection_inference.jpeg" width="400" class="center">
+
+<img src="example/urn_detection_inference.jpeg" width="400" class="centerImage">
 
 *NB*: Since an urn is a stationary object (i.e. its position is not supposed to change in time),
 the dectection can be performed on a single (initial) video frame. Then, the urn's coordinares could
@@ -42,6 +43,7 @@ of the object's appearence. My implementation of the SORT tracker inside the YOL
 tracker on **Google Colab**.
 
 **Example of tracking in a room using SORT and YOLOv5**
+
 ![Gif example](https://github.com/maxmarkov/track_and_count/blob/master/example/tracker_example.gif)
 
 The SORT tracker is written with numpy which creates problems in inference on GPU. In this case 
