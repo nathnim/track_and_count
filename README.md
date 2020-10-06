@@ -1,4 +1,25 @@
-# Track and count
+# Project objective
+
+The aim of this project is to count the number of unique people voting in a room during the day.
+The project is devided into several steps:
+
+1. Custom object (an urn) detection
+2. people tracking
+3. counting unique people
+
+Each of these tasks is a separate topic itself and could be generalized further to be used for other purposes.
+For instance, tasks 2 and 3 could be employed to count the number of unique customers in a shop etc.  
+
+## Custom object detection 
+
+The implementation of custom object detection could be found in a folder urn_detection_yolov5. 
+First, the dataset of urn pictures was collected (see collecting_urn_dataset.doc for details).
+Note that the dataset was already augmented with different brightness levels to simulate the 
+effect of illumination in a room or bad camera settings. The dataset is downloaded with curl.
+Then. yolov5 detector is applied with 2 classes of objects: urn (custom object) and person (coco object). 
+Finaly, the inference is done on a subset of data and the result is visualized.     
+
+## Track and count
 
 Collection of scripts to solve the detection-tracking-counting problem. 
 The algorithm makes use of YOLOv5 for detection, of SORT for tracking and
