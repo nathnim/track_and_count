@@ -10,6 +10,8 @@ The project is devided into several steps:
 Each of these tasks is a separate topic itself and could be generalized further to be used for other purposes.
 For instance, **tasks 2 and 3** could be employed to count the number of unique customers in a shop *etc*.  
 
+**For the description how the problem is going to be handled, go directly to the 'Voting. Problem statement' section below.**
+
 ## Custom object detection 
 
 The implementation of custom object detection could be found in a folder *urn_detection_yolov5*. 
@@ -78,7 +80,7 @@ voters is built, one can run a neural network to find the unique voters based on
 ## Theory
 
 In order to avoid the fit-predict style of the project, I try to understanid the theory behind the modern trackers and detectors.
-I summarize this knowledge in the folder "theory" where I have slides and notes on related topics (constantly updated). 
+I summarize my knowledge in folder "theory" where I have slides and notes on related subjects (constantly updated). 
 
 ## Literature
 
