@@ -10,7 +10,7 @@ The project is devided into several steps:
 Each of these tasks is a separate topic itself and could be generalized further to be used for other purposes.
 For instance, **tasks 2 and 3** could be employed to count the number of unique customers in a shop *etc*.  
 
-**For the description how the problem is going to be handled, go directly to the 'Voting. Problem statement' section below.**
+**For the description of how the problem is going to be tackled, go directly to the 'Voting. Problem statement' section below.**
 
 ## Custom object detection 
 
@@ -87,7 +87,9 @@ I summarize my knowledge in folder "theory" where I have slides and notes on rel
 - [Simple Online and Realtime Tracking (SORT)](https://arxiv.org/abs/1602.00763)
 - [Simple Online and Realtime Tracking with a Deep Association Metric (Deep SORT)](https://arxiv.org/pdf/1703.07402.pdf)
 - [Real-Time Multiple Object Tracking: A Study on the Importance of Speed by S.Murray](https://arxiv.org/pdf/1709.03572.pdf)
-- [Real time multiple camera person detection and tracking by D. Baikova](https://repositorio.iscte-iul.pt/handle/10071/17743)
+- [Real time multiple camera person detection and tracking by D.Baikova](https://repositorio.iscte-iul.pt/handle/10071/17743)
+- [Detection-based Multi-Object Trackingin Presence of Unreliable Appearance Features by A.Kumar(UCL)](https://sites.uclouvain.be/ispgroup/uploads//Main/PHDAKC_thesis.pdf)
+- [Slides on "Re-identification for multi-person tracking" by V. Sommers (UCL)](https://sites.uclouvain.be/ispgroup/uploads//ISPS/ABS220720_slides.pdf)
 - [Kalman and Bayesian Filters in Python (pdf)](https://elec3004.uqcloud.net/2015/tutes/Kalman_and_Bayesian_Filters_in_Python.pdf)
 - [Kalman and Bayesian Filters in Python (codes)](https://github.com/rlabbe/Kalman-and-Bayesian-Filters-in-Python)
 - [Deep Cosine Metric Learning for Person Re-Identification](https://elib.dlr.de/116408/1/WACV2018.pdf)
@@ -97,6 +99,7 @@ I summarize my knowledge in folder "theory" where I have slides and notes on rel
 - [SORT](https://github.com/abewley/sort)
 - [Deep SORT (TF)](https://github.com/nwojke/deep_sort), [Deep SORT (PyTorch)](https://github.com/ZQPei/deep_sort_pytorch)
 - [YOLOv5+DeepSORT](https://github.com/mikel-brostrom/Yolov5_DeepSort_Pytorch)
+- [Deep person reid (UCL)](https://github.com/VlSomers/deep-person-reid)
 - [YOLOv4](https://github.com/AlexeyAB/darknet), [YOLOv4 PyTorch](https://github.com/Tianxiaomo/pytorch-YOLOv4)
 - [YOLOv5](https://github.com/ultralytics/yolov5)
 - [FilterPy library (the Kalman filter)](https://filterpy.readthedocs.io/en/latest/)
