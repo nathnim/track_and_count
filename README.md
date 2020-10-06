@@ -1,4 +1,4 @@
-# Project objective
+# Project objective and description
 
 The aim of this project is to count the number of unique people voting in a room during the day.
 The project is devided into several steps:
@@ -56,17 +56,22 @@ But we use this implementation to see how it works for our problem (currently in
 ## Voting. Problem statement.
 
 Since our primary task is to count the number of unique voters but not the total number of people in a room (some people like kids
-often just accomany the people who vote), it is important to define the voting act in a more precise way. Both an urn and voters are
-identified using the YOLOv5 detector which put a bounding box around each of them. To vote, a person must come close to an urn and 
-spend a certain amount of time around it (i.e. the distance between the centroids must be within a certain critical radius). This 
-"certain amount of time" is necessary to differintiate between people who pass by and who actually vote.  
+often just accomany their parents who vote), it is important to define the voting act in a more precise way. Both an urn and voters are
+identified using the YOLOv5 detector which puts a bounding box around each of them. To vote, a person must come close to an urn and 
+spend a certain amount of time around (i.e. the distance between the object centroids must be within a certain critical radius). This 
+"certain amount of time" is necessary to distinguish the people who pass by and the ones who actually vote. This definition requires two
+predefined **parameters**: 
 
-**Parameters**
 - Critical radius
 - Minimum interaction time
 
-## Unique people counter
+The person whose motion satisfies the conditions defined above can be then tracked until he/she dissapears from the camera view. The 
+tracking is necessary in case the person stays in a room hanging around for a while. To further insure that we count the unique people only,
+one can save an image of each tracked person inside the bound box building a database of voters in a video. When the datebase of voters is built,
+we can run a neural network to find the unique voters. For this person the Siamese NN could be used.     
 
+**TO DO:**
+- Think about the intersection of units (IoU) in support/in instead of the critical radius
 - Create a set of bbox snapshots for each ID
 - **Counter**: NN to identify the number of unique people from the dataset
 
