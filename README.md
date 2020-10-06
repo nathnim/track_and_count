@@ -20,7 +20,10 @@ for details). Note that the dataset has already been augmented with different br
 effect of illumination in a room and/or bad camera settings. The dataset can be downloaded with curl.
 Then, the **YOLOv5 detector** is applied with 2 classes of objects specified: an urn (a custom object) 
 and a person (a coco object). The neural network is then fine tuned to learn about the custom 
-object class. Finaly, the inference is done on a subset of data and the result is visualized.     
+object class. Finaly, the inference is done on a subset of data and the result is visualized. 
+
+**Example of urn detection with YOLOv5**
+<img src="example/urn_detection_inference.jpeg" width="400" class="center">
 
 *NB*: Since an urn is a stationary object (i.e. its position is not supposed to change in time),
 the dectection can be performed on a single (initial) video frame. Then, the urn's coordinares could
