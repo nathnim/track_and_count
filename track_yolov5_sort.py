@@ -18,7 +18,8 @@ from utils.general import (
     xyxy2xywh, plot_one_box, strip_optimizer, set_logging)
 from utils.torch_utils import select_device, load_classifier, time_synchronized
 
-import sort as sort_module
+import sort.sort as sort_module
+#import sort as sort_module
 
 
 def detect(save_img=False):
