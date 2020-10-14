@@ -82,6 +82,18 @@ voters is built, one can run a neural network to find the unique voters based on
 - Create a set of bbox snapshots for each ID
 - **Counter**: NN to identify the number of unique people from the dataset
 
+## How to run the trackers
+
+- yolov5 + sort
+  1. Download yolov5 and install requirements
+     pip3 install -r yolov5/requirements.txt
+
+  2. Download sort and install requirements
+     pip3 install -r sort/requirements.txt
+
+  3. Run the tracker on a sample video
+     python3 track_yolov5_sort.py --source example/running.mp4 --weights yolov5/weights/yolov5s.pt --conf 0.4 --max_age 50 --min_hits 10 --iou_threshold 0.3
+
 ## Theory
 
 In order to avoid the fit-predict style of the project, I try to understanid the theory behind the modern trackers and detectors.
