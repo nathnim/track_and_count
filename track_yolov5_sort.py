@@ -113,11 +113,17 @@ def detect(save_img=False):
                     n = (det[:, -1] == c).sum()           # detections per class
                     s += '%g %ss, ' % (n, names[int(c)])  # add to string
 
-                    # SORT: number of people detected
-                    idxs_ppl = (det[:,-1] == idx_person).nonzero().squeeze(dim=1)   # 1. List of indices with 'person' class detections
-                    dets_ppl = det[idxs_ppl,:-1]                                    # 2. Torch.tensor with 'person' detections
-                    nums_ppl = int((det[:, -1] == idx_person).sum())                # 3. How many people were detected in the frame
-                    print('{} people were detected!!!'.format(nums_ppl))
+                # SORT: number of people detected
+                idxs_ppl = (det[:,-1] == idx_person).nonzero().squeeze(dim=1)   # 1. List of indices with 'person' class detections
+                dets_ppl = det[idxs_ppl,:-1]                                    # 2. Torch.tensor with 'person' detections
+                nums_ppl = int((det[:, -1] == idx_person).sum())                # 3. How many people were detected in the frame
+                print('{} people were detected!!!'.format(nums_ppl))
+
+                ##############################################################
+                xywhs = xyxy2xywh(dets_ppl[:,:-1])
+                confs = dets_ppl[:,4]
+                print(xywhs, confs)
+                ###############################################################
 
                 # SORT feed detections to the tracker 
                 if len(dets_ppl) != 0:
