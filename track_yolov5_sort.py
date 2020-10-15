@@ -1,3 +1,7 @@
+import sys
+# 
+sys.path.insert(0, './yolov5')
+
 import argparse
 import os
 import platform
@@ -11,16 +15,15 @@ import torch.backends.cudnn as cudnn
 from numpy import random
 from numpy import where
 
-from models.experimental import attempt_load
-from utils.datasets import LoadStreams, LoadImages
-from utils.general import (
+from yolov5.models.experimental import attempt_load
+from yolov5.utils.datasets import LoadStreams, LoadImages
+from yolov5.utils.general import (
     check_img_size, non_max_suppression, apply_classifier, scale_coords,
     xyxy2xywh, plot_one_box, strip_optimizer, set_logging)
-from utils.torch_utils import select_device, load_classifier, time_synchronized
+from yolov5.utils.torch_utils import select_device, load_classifier, time_synchronized
 
 import sort.sort as sort_module
 #import sort as sort_module
-
 
 def detect(save_img=False):
     out, source, weights, view_img, save_txt, imgsz = \
@@ -61,6 +64,9 @@ def detect(save_img=False):
     # Get names and colors
     names = model.module.names if hasattr(model, 'module') else model.names
     colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(names))]
+
+    # Find index corresponding to a person
+    idx_person = names.index("person")
 
     # SORT: initialize the tracker
     mot_tracker = sort_module.Sort(max_age=opt.max_age, min_hits=opt.min_hits, iou_threshold=opt.iou_threshold)
@@ -104,18 +110,18 @@ def detect(save_img=False):
 
                 # Print results
                 for c in det[:, -1].unique():
-                    n = (det[:, -1] == c).sum()  # detections per class
+                    n = (det[:, -1] == c).sum()           # detections per class
                     s += '%g %ss, ' % (n, names[int(c)])  # add to string
+
                     # SORT: number of people detected
-                    if names[int(c)] == 'person':
-                        idx_ppl = torch.where((det[:, -1] == c)==True)[0].tolist()  # 1. List of indices with 'person' class detections
-                        det_people = det[idx_ppl,:-1]                         # 2. Torch.tensor with 'person' detections
-                        num_people = int(n)                                   # 3. Let me know how many people were detected in the frame
-                        print(num_people, ' people were detected!')
-                 
+                    idxs_ppl = (det[:,-1] == idx_person).nonzero().squeeze(dim=1)   # 1. List of indices with 'person' class detections
+                    dets_ppl = det[idxs_ppl,:-1]                                    # 2. Torch.tensor with 'person' detections
+                    nums_ppl = int((det[:, -1] == idx_person).sum())                # 3. How many people were detected in the frame
+                    print('{} people were detected!!!'.format(nums_ppl))
+
                 # SORT feed detections to the tracker 
-                if len(det_people) != 0:
-                    trackers = mot_tracker.update(det_people)
+                if nums_ppl != 0:
+                    trackers = mot_tracker.update(dets_ppl)#(det_people)
                     for d in trackers:
                         plot_one_box(d[:-1], im0, label='ID'+str(int(d[-1])), color=colors[1], line_thickness=1)
 
