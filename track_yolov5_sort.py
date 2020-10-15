@@ -120,21 +120,10 @@ def detect(save_img=False):
                     print('{} people were detected!!!'.format(nums_ppl))
 
                 # SORT feed detections to the tracker 
-                if nums_ppl != 0:
-                    trackers = mot_tracker.update(dets_ppl)#(det_people)
+                if len(dets_ppl) != 0:
+                    trackers = mot_tracker.update(dets_ppl)
                     for d in trackers:
                         plot_one_box(d[:-1], im0, label='ID'+str(int(d[-1])), color=colors[1], line_thickness=1)
-
-                ## Write results
-                #for *xyxy, conf, cls in reversed(det):
-                #    if save_txt:  # Write to file
-                #        xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
-                #        with open(txt_path + '.txt', 'a') as f:
-                #            f.write(('%g ' * 5 + '\n') % (cls, *xywh))  # label format
-
-                #    if save_img or view_img:  # Add bbox to image
-                #        label = '%s %.2f' % (names[int(cls)], conf)
-                #        plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=3)
 
             # Print time (inference + NMS)
             print('%sDone. (%.3fs)' % (s, t2 - t1))
