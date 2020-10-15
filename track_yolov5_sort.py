@@ -1,5 +1,4 @@
 import sys
-# 
 sys.path.insert(0, './yolov5')
 
 import argparse
@@ -116,16 +115,9 @@ def detect(save_img=False):
                 # SORT: number of people detected
                 idxs_ppl = (det[:,-1] == idx_person).nonzero().squeeze(dim=1)   # 1. List of indices with 'person' class detections
                 dets_ppl = det[idxs_ppl,:-1]                                    # 2. Torch.tensor with 'person' detections
-                nums_ppl = int((det[:, -1] == idx_person).sum())                # 3. How many people were detected in the frame
-                print('{} people were detected!!!'.format(nums_ppl))
+                print('\n {} people were detected!!!'.format(len(idxs_ppl))
 
-                ##############################################################
-                xywhs = xyxy2xywh(dets_ppl[:,:-1])
-                confs = dets_ppl[:,4]
-                print(xywhs, confs)
-                ###############################################################
-
-                # SORT feed detections to the tracker 
+                # SORT: feed detections to the tracker 
                 if len(dets_ppl) != 0:
                     trackers = mot_tracker.update(dets_ppl)
                     for d in trackers:

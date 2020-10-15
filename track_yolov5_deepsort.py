@@ -1,5 +1,4 @@
 import sys
-#
 sys.path.insert(0, './yolov5')
 
 import argparse
@@ -121,23 +120,18 @@ def detect(save_img=False):
                     n = (det[:, -1] == c).sum()  # detections per class
                     s += '%g %ss, ' % (n, names[int(c)])  # add to string
 
-                # Deep SORT: number of people detected
+                # Deep SORT: person class only
                 idxs_ppl = (det[:,-1] == idx_person).nonzero().squeeze(dim=1)   # 1. List of indices with 'person' class detections
                 dets_ppl = det[idxs_ppl,:-1]                                    # 2. Torch.tensor with 'person' detections
-                nums_ppl = int((det[:, -1] == idx_person).sum())                # 3. How many people were detected in the frame
-                print('{} people were detected!!!'.format(nums_ppl))
+                print('\n {} people were detected!'.format(len(idxs_ppl)))
 
-                ##############################################################
+                # Deep SORT: convert data into a proper format
                 xywhs = xyxy2xywh(dets_ppl[:,:-1])
                 confs = dets_ppl[:,4]
-                print(xywhs, confs)
-                ###############################################################
 
-                # Deep SORT feed detections to the tracker 
+                # Deep SORT: feed detections to the tracker 
                 if len(dets_ppl) != 0:
-                    # do tracking
                     trackers = deepsort.update(xywhs, confs, im0)
-
                     for d in trackers:
                         plot_one_box(d[:-1], im0, label='ID'+str(int(d[-1])), color=colors[1], line_thickness=1)
 
