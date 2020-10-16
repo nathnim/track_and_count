@@ -84,22 +84,21 @@ voters is built, one can run a neural network to find the unique voters based on
 
 ## How to run the trackers
 
-- Install all dependencies:
+1. Install all dependencies:
 
-  1. Download yolov5 and install requirements
-     pip3 install -r yolov5/requirements.txt
+    pip3 install -r requirements.txt
 
-  2. Download sort and install requirements
-     pip3 install -r sort/requirements.txt
+2. Download weights:
+     
+    ./yolov5/weights/download_weights.sh   
+    ./deep_sort/deep_sort/deep/checkpoint/download_weights.sh
 
-- YOLOv5 + SORT
+3a. Run the tracker: YOLOv5 + SORT
 
-  3. Run the tracker on a sample video
      python3 track_yolov5_sort.py --source example/running.mp4 --weights yolov5/weights/yolov5s.pt --conf 0.4 --max_age 50 --min_hits 10 --iou_threshold 0.3
 
-- YOLOv5 + Deep SORT
+3b. Run the tracker: YOLOv5 + Deep SORT
 
-  3. Run the tracker on a sample video
      python3 track_yolov5_deepsort.py --source 'example/running.mp4' --weights 'yolov5/weights/yolov5s.pt'
 
 ## Theory
