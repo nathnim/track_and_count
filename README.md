@@ -93,11 +93,9 @@ voters is built, one can run a neural network to find the unique voters based on
     ./yolov5/weights/download_weights.sh   
     ./deep_sort/deep_sort/deep/checkpoint/download_weights.sh
 
-3a. Run the tracker: YOLOv5 + SORT
+3. Run the tracker: YOLOv5 + (SORT, Deep SORT)
 
      python3 track_yolov5_sort.py --source example/running.mp4 --weights yolov5/weights/yolov5s.pt --conf 0.4 --max_age 50 --min_hits 10 --iou_threshold 0.3
-
-3b. Run the tracker: YOLOv5 + Deep SORT
 
      python3 track_yolov5_deepsort.py --source 'example/running.mp4' --weights 'yolov5/weights/yolov5s.pt'
 
