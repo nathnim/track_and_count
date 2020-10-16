@@ -115,7 +115,7 @@ def detect(save_img=False):
                 # SORT: number of people detected
                 idxs_ppl = (det[:,-1] == idx_person).nonzero().squeeze(dim=1)   # 1. List of indices with 'person' class detections
                 dets_ppl = det[idxs_ppl,:-1]                                    # 2. Torch.tensor with 'person' detections
-                print('\n {} people were detected!!!'.format(len(idxs_ppl))
+                print('\n {} people were detected!'.format(len(idxs_ppl)))
 
                 # SORT: feed detections to the tracker 
                 if len(dets_ppl) != 0:
