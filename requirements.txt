@@ -28,7 +28,8 @@ tqdm>=4.41.0
 
 # sort ----------------------------------------
 filterpy==1.4.5
-scikit-image==0.17.2
+albumentations==0.4.6
+scikit-image
 lap==0.4.0
 
 # deep sort -----------------------------------
