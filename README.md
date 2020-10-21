@@ -3,14 +3,14 @@
 The aim of this project is to count the number of unique people voting in a room during the day.
 The project is devided into several steps:
 
-1. Custom object (an urn) detection
-2. People tracking
-3. Counting unique people
+1. Custom object (an urn) detection (done)
+2. People tracking (done)
+3. Counting unique people (in progress)
 
 Each of these tasks is a separate topic itself and could be generalized further to be used for other purposes.
 For instance, **tasks 2 and 3** could be employed to count the number of unique customers in a shop *etc*.  
 
-**For the description of how the problem is going to be tackled, go directly to the 'Voting. Problem statement' section below.**
+**For the description of how the problem is tackled, go directly to the 'Voting. Problem statement' section below.**
 
 ## Custom object detection 
 
@@ -39,25 +39,31 @@ between each other to re-identify the same person. **The SORT tracker** combines
 to predict the state of the object (*the motion model*) and the Hungarian algorithm to associate objects 
 from the previous frames with objects in the current frame. The tracker does not take into account any details
 of the object's appearence. My implementation of the SORT tracker inside the YOLOv5 inference script could be found in 
-*detect_and_track_yolov5_sort.py* Jupyter notebook *run_tracker_on_colab.ipynb* shows how to run the
+*track_yolov5_sort.py*. The Jupyter notebook *run_sort_tracker_on_colab.ipynb* shows how to run the
 tracker on **Google Colab**.
 
 **Example of tracking in a room using SORT and YOLOv5**
 
 ![Gif example](https://github.com/maxmarkov/track_and_count/blob/master/example/tracker_example.gif)
 
-The SORT tracker is written with numpy which creates problems in inference on GPU. In this case 
-one can run the tracker on CPU only. A nice alternative to the SORT tracker is a [Deep SORT](https://arxiv.org/pdf/1703.07402.pdf).
-**The Deep SORT** extends the SORT tracker adding a deep association metric to build an appearance model in addition to the motion
-model. According to the authors, this extension enables to track objects through longer periods of occlusions, effectively reducing
-the number of identity switches. Here I do not aim to implement this tracker into 
-the inference script since such [implementations already exist](https://github.com/mikel-brostrom/Yolov5_DeepSort_Pytorch).
-But we use this implementation to see how it works for our problem (currently in progress).
+A nice alternative to the SORT tracker is a [Deep SORT](https://arxiv.org/pdf/1703.07402.pdf).
+**The Deep SORT** extends the SORT tracker adding a deep association metric to build an appearance
+model in addition to the motion model. According to the authors, this extension enables to track objects
+through longer periods of occlusions, effectively reducing the number of identity switches. My implemention
+of the tracker inside the YOLOv5 inference script could be found in *track_yolov5_deepsort.py*. The Jupyter
+notebook *run_deepsort_tracker_on_colab.ipynb* shows how to run the tracker on **Google Colab**.
+
+**Appearance features(in progress)**
+
+There might be a situation when the security guards or the election board members approach an urn several times during the day.
+We must distinguish these cases from voting. In order to do it, we save the appearance features for each person (with a unique ID) 
+approaching an urn and compare them with similarity metrics already implemented in Deep SORT.
 
 **Content:**
 
-- detect_and_track_yolov5_sort.py is the implementation of detect+track task
-- run_tracker_on_colab.ipynb shows how to run the tracker on google colab. 
+- track_yolov5_sort.py implements the SORT tracker in YOLOv5
+- track_yolov5_deepsort.py implements the Deep SORT tracker in YOLOv5
+- run_sort_tracker_on_colab.ipynb and run_deepsort_tracker_on_colab.ipynb shows how to run the trackers on google colab. 
 - folder 'theory' contains the slides with summary of theoretical approaches  
 
 ## Voting. Problem statement.
