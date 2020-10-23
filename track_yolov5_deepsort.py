@@ -121,8 +121,8 @@ def detect(save_img=False):
                     s += '%g %ss, ' % (n, names[int(c)])  # add to string
 
                 # Deep SORT: person class only
-                idxs_ppl = (det[:,-1] == idx_person).nonzero().squeeze(dim=1)   # 1. List of indices with 'person' class detections
-                dets_ppl = det[idxs_ppl,:-1]                                    # 2. Torch.tensor with 'person' detections
+                idxs_ppl = (det[:,-1] == idx_person).nonzero(as_tuple=False).squeeze(dim=1)   # 1. List of indices with 'person' class detections
+                dets_ppl = det[idxs_ppl,:-1]                                                  # 2. Torch.tensor with 'person' detections
                 print('\n {} people were detected!'.format(len(idxs_ppl)))
 
                 # Deep SORT: convert data into a proper format
