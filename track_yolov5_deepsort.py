@@ -126,8 +126,8 @@ def detect(save_img=False):
                 print('\n {} people were detected!'.format(len(idxs_ppl)))
 
                 # Deep SORT: convert data into a proper format
-                xywhs = xyxy2xywh(dets_ppl[:,:-1])
-                confs = dets_ppl[:,4]
+                xywhs = xyxy2xywh(dets_ppl[:,:-1]).to("cpu")
+                confs = dets_ppl[:,4].to("cpu")
 
                 # Deep SORT: feed detections to the tracker 
                 if len(dets_ppl) != 0:
