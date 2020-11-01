@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import json 
 
 from .deep.feature_extractor import Extractor
 from .sort.nn_matching import NearestNeighborDistanceMetric
@@ -39,16 +40,24 @@ class DeepSort(object):
         # update tracker
         self.tracker.predict()
         self.tracker.update(detections)
-
+        # write the features into files
+        for idx in self.tracker.appearance_features.keys():
+            filename = "feature_id"+str(idx)+".json"
+            with open(filename, "w") as write_file:
+                 json.dump(self.tracker.appearance_features[idx].tolist(), write_file)
         # output bbox identities
         outputs = []
+        features = {}
         for track in self.tracker.tracks:
             if not track.is_confirmed() or track.time_since_update > 1:
                 continue
             box = track.to_tlwh()
             x1,y1,x2,y2 = self._tlwh_to_xyxy(box)
             track_id = track.track_id
-            outputs.append(np.array([x1,y1,x2,y2,track_id], dtype=np.int))
+            print(track_id)
+            # TO DO: add feature to outputs list and pass it to the main track script
+            features[track_id] = 0.0
+            outputs.append(np.array([x1,y1,x2,y2,track_id,features[track_id]], dtype=np.int))
         if len(outputs) > 0:
             outputs = np.stack(outputs,axis=0)
         return outputs

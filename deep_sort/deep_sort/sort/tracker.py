@@ -46,6 +46,7 @@ class Tracker:
         self.kf = kalman_filter.KalmanFilter()
         self.tracks = []
         self._next_id = 1
+        self.appearance_features = {}  # 
 
     def predict(self):
         """Propagate track state distributions one time step forward.
@@ -70,8 +71,10 @@ class Tracker:
 
         # Update track set.
         for track_idx, detection_idx in matches:
+            print('matched', track_idx, detection_idx, detections[detection_idx].feature[0:1])
             self.tracks[track_idx].update(
                 self.kf, detections[detection_idx])
+            self.appearance_features[track_idx] = detections[detection_idx].feature
         for track_idx in unmatched_tracks:
             self.tracks[track_idx].mark_missed()
         for detection_idx in unmatched_detections:
@@ -84,6 +87,7 @@ class Tracker:
         for track in self.tracks:
             if not track.is_confirmed():
                 continue
+            print('track ID' , track.track_id, len(track.features))
             features += track.features
             targets += [track.track_id for _ in track.features]
             track.features = []
