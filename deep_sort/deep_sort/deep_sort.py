@@ -40,11 +40,6 @@ class DeepSort(object):
         # update tracker
         self.tracker.predict()
         self.tracker.update(detections)
-        # write the features into files
-        for idx in self.tracker.appearance_features.keys():
-            filename = "feature_id"+str(idx)+".json"
-            with open(filename, "w") as write_file:
-                 json.dump(self.tracker.appearance_features[idx].tolist(), write_file)
         # output bbox identities
         outputs = []
         features = {}
@@ -54,10 +49,15 @@ class DeepSort(object):
             box = track.to_tlwh()
             x1,y1,x2,y2 = self._tlwh_to_xyxy(box)
             track_id = track.track_id
-            print(track_id)
+            #### Feature object saver ####
+            filename = "feature_id"+str(track_id)+".json"
+            with open(filename, "w") as write_file:
+                json.dump(self.tracker.appearance_features[track_id].tolist(), write_file)
+            #print('DEEPSORT', track_id, len(self.tracker.appearance_features[track_id]))
+            ##############################
             # TO DO: add feature to outputs list and pass it to the main track script
-            features[track_id] = 0.0
-            outputs.append(np.array([x1,y1,x2,y2,track_id,features[track_id]], dtype=np.int))
+            #features[track_id] = self.tracker.appearance_features[track_id]
+            outputs.append(np.array([x1,y1,x2,y2,track_id], dtype=np.int))
         if len(outputs) > 0:
             outputs = np.stack(outputs,axis=0)
         return outputs

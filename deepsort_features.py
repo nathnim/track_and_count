@@ -92,6 +92,7 @@ def detect(save_img=False):
         # Inference
         t1 = time_synchronized()
         pred = model(img, augment=opt.augment)[0]
+        print('PRED', type(pred), pred.shape)
 
         # Apply NMS
         pred = non_max_suppression(pred, opt.conf_thres, opt.iou_thres, classes=opt.classes, agnostic=opt.agnostic_nms)
@@ -133,7 +134,9 @@ def detect(save_img=False):
                 if len(dets_ppl) != 0:
                     trackers = deepsort.update(xywhs, confs, im0)
                     for d in trackers:
-                        plot_one_box(d[:-1], im0, label='ID'+str(int(d[-1])), color=colors[1], line_thickness=1)
+                        #print("MAIN PART, TRACK ID", int(d[4]))
+                        #print('Feature vector', feature)
+                        plot_one_box(d[:4], im0, label='ID'+str(int(d[4])), color=colors[1], line_thickness=1)
 
             # Print time (inference + NMS)
             print('%sDone. (%.3fs)' % (s, t2 - t1))
