@@ -13,6 +13,8 @@ import torch
 import torch.backends.cudnn as cudnn
 from numpy import random
 from numpy import where
+# libs to save feature arrays
+from numpy import savetxt, save, savez_compressed 
 
 from models.experimental import attempt_load
 from utils.datasets import LoadStreams, LoadImages
@@ -24,7 +26,6 @@ from utils.torch_utils import select_device, load_classifier, time_synchronized
 # deep sort part
 from deep_sort.utils.parser import get_config
 from deep_sort.deep_sort import DeepSort
-import json
 
 def detect(save_img=False):
     out, source, weights, view_img, save_txt, imgsz = \
@@ -36,7 +37,10 @@ def detect(save_img=False):
     device = select_device(opt.device)
     if os.path.exists(out):
         shutil.rmtree(out)  # delete output folder
+    if os.path.exists(opt.features):
+        shutil.rmtree(opt.features)  # delete features output folder
     os.makedirs(out)  # make new output folder
+    os.makedirs(opt.features)  # make new output folder
     half = device.type != 'cpu'  # half precision only supported on CUDA
 
     # Load model
@@ -133,13 +137,28 @@ def detect(save_img=False):
                 # Deep SORT: feed detections to the tracker 
                 if len(dets_ppl) != 0:
                     trackers, features = deepsort.update(xywhs, confs, im0)
+                    print('FRAME INDEX:', dataset.frame)
                     for d in trackers:
-                        ##### Feature object saver ####
+                        ##### DEEP SORT feature object saver ####
                         track_id = d[4]
-                        filename = "feature_id"+str(track_id)+".json"
-                        with open(filename, "w") as write_file:
-                            json.dump(features[track_id].tolist(), write_file)
-                        print('DEEPSORT FEATURE', track_id, features[track_id][0:1])
+                        fname = opt.features+'/ID_{}'.format(track_id)
+                        if not os.path.exists(fname):
+                            os.mkdir(fname)
+
+                        # choose format to save feature arrays on your machine: 
+                        # https://machinelearningmastery.com/how-to-save-a-numpy-array-to-file-for-machine-learning/
+                        save_format = 'csv'
+                        filename = fname+"/feature_frame_"+str(dataset.frame)
+                        if save_format == 'csv':
+                            savetxt(filename+'.csv', features[track_id], delimiter=',')
+                            #data = numpy.loadtxt('data.csv', delimiter=',')
+                        elif save_format == 'npy':
+                            save(filename+'.npy', features[track_id])
+                            #data = numpy.load('data.npy')
+                        elif save_format == 'npz':
+                            savez_compressed(filename+'.npz', features[track_id])
+                            # dict_data = load('data.npz'); data = dict_data['arr_0']
+                        #print('DEEPSORT FEATURE', track_id, features[track_id].shape)
                         ###############################
                         plot_one_box(d[:4], im0, label='ID'+str(int(d[4])), color=colors[1], line_thickness=1)
 
@@ -182,6 +201,7 @@ if __name__ == '__main__':
     parser.add_argument('--weights', nargs='+', type=str, default='yolov5s.pt', help='model.pt path(s)')
     parser.add_argument('--source', type=str, default='inference/images', help='source')  # file/folder, 0 for webcam
     parser.add_argument('--output', type=str, default='inference/output', help='output folder')  # output folder
+    parser.add_argument('--features', type=str, default='inference/features', help='features output folder')  # feature output folder
     parser.add_argument('--img-size', type=int, default=640, help='inference size (pixels)')
     parser.add_argument('--conf-thres', type=float, default=0.4, help='object confidence threshold')
     parser.add_argument('--iou-thres', type=float, default=0.5, help='IOU threshold for NMS')
