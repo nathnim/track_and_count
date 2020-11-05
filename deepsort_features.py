@@ -14,6 +14,8 @@ import torch.backends.cudnn as cudnn
 from numpy import random
 from numpy import where
 # libs to save feature arrays
+import csv
+import pickle
 from numpy import savetxt, save, savez_compressed 
 
 from models.experimental import attempt_load
@@ -66,6 +68,10 @@ def detect(save_img=False):
         save_img = True
         dataset = LoadImages(source, img_size=imgsz)
 
+    # log file dictionary: save frames when track_id object is detected
+    log_frames = {"FPS": dataset.cap.get(cv2.CAP_PROP_FPS)}
+    print("FRAMES PER SECOND ", dataset.cap.get(cv2.CAP_PROP_FPS))
+
     # Get names and colors
     names = model.module.names if hasattr(model, 'module') else model.names
     colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(names))]
@@ -87,6 +93,7 @@ def detect(save_img=False):
     img = torch.zeros((1, 3, imgsz, imgsz), device=device)  # init img
     _ = model(img.half() if half else img) if device.type != 'cpu' else None  # run once
     for path, img, im0s, vid_cap in dataset:
+        #print("FRAMES PER SECOND ", vid_cap.get(cv2.CAP_PROP_FPS))
         img = torch.from_numpy(img).to(device)
         img = img.half() if half else img.float()  # uint8 to fp16/32
         img /= 255.0  # 0 - 255 to 0.0 - 1.0
@@ -96,7 +103,6 @@ def detect(save_img=False):
         # Inference
         t1 = time_synchronized()
         pred = model(img, augment=opt.augment)[0]
-        print('PRED', type(pred), pred.shape)
 
         # Apply NMS
         pred = non_max_suppression(pred, opt.conf_thres, opt.iou_thres, classes=opt.classes, agnostic=opt.agnostic_nms)
@@ -137,13 +143,13 @@ def detect(save_img=False):
                 # Deep SORT: feed detections to the tracker 
                 if len(dets_ppl) != 0:
                     trackers, features = deepsort.update(xywhs, confs, im0)
-                    print('FRAME INDEX:', dataset.frame)
                     for d in trackers:
                         ##### DEEP SORT feature object saver ####
                         track_id = d[4]
                         fname = opt.features+'/ID_{}'.format(track_id)
                         if not os.path.exists(fname):
                             os.mkdir(fname)
+                            log_frames['ID_'+str(track_id)] = []
 
                         # choose format to save feature arrays on your machine: 
                         # https://machinelearningmastery.com/how-to-save-a-numpy-array-to-file-for-machine-learning/
@@ -158,9 +164,21 @@ def detect(save_img=False):
                         elif save_format == 'npz':
                             savez_compressed(filename+'.npz', features[track_id])
                             # dict_data = load('data.npz'); data = dict_data['arr_0']
-                        #print('DEEPSORT FEATURE', track_id, features[track_id].shape)
+                        # update log file with track_id detection history
+                        log_frames['ID_'+str(track_id)].append(dataset.frame)
                         ###############################
                         plot_one_box(d[:4], im0, label='ID'+str(int(d[4])), color=colors[1], line_thickness=1)
+
+            # DEEP SORT: save updated log file
+            log_format = 'txt'
+            if log_format == 'txt':
+                f_log = open(opt.features+"/log_detection.txt","w")
+                f_log.write( str(log_frames) )
+            elif log_format == 'pkl':
+                f_log = open(opt.features+"/log_detection.pkl","wb")
+                pickle.dump(log_frames,f_log)
+            f_log.close()
+            ###################################
 
             # Print time (inference + NMS)
             print('%sDone. (%.3fs)' % (s, t2 - t1))
