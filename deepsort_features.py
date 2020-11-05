@@ -24,7 +24,7 @@ from utils.torch_utils import select_device, load_classifier, time_synchronized
 # deep sort part
 from deep_sort.utils.parser import get_config
 from deep_sort.deep_sort import DeepSort
-
+import json
 
 def detect(save_img=False):
     out, source, weights, view_img, save_txt, imgsz = \
@@ -132,10 +132,15 @@ def detect(save_img=False):
 
                 # Deep SORT: feed detections to the tracker 
                 if len(dets_ppl) != 0:
-                    trackers = deepsort.update(xywhs, confs, im0)
+                    trackers, features = deepsort.update(xywhs, confs, im0)
                     for d in trackers:
-                        #print("MAIN PART, TRACK ID", int(d[4]))
-                        #print('Feature vector', feature)
+                        ##### Feature object saver ####
+                        track_id = d[4]
+                        filename = "feature_id"+str(track_id)+".json"
+                        with open(filename, "w") as write_file:
+                            json.dump(features[track_id].tolist(), write_file)
+                        print('DEEPSORT FEATURE', track_id, features[track_id][0:1])
+                        ###############################
                         plot_one_box(d[:4], im0, label='ID'+str(int(d[4])), color=colors[1], line_thickness=1)
 
             # Print time (inference + NMS)

@@ -71,7 +71,6 @@ class Tracker:
 
         # Update track set.
         for track_idx, detection_idx in matches:
-            #print('matched', track_idx, detection_idx, detections[detection_idx].feature[0:1])
             self.tracks[track_idx].update(
                 self.kf, detections[detection_idx])
         for track_idx in unmatched_tracks:
@@ -86,11 +85,9 @@ class Tracker:
         for track in self.tracks:
             if not track.is_confirmed():
                 continue
+            # DEEP SORT features
             if len(track.features) > 0:
-                #print('track ID' , track.track_id, track.features[0][0:1])
                 self.appearance_features[track.track_id] = track.features[0]
-            #else:
-            #    print('Empty track ID', track.track_id)
             features += track.features
             targets += [track.track_id for _ in track.features]
             track.features = []

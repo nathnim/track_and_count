@@ -131,7 +131,7 @@ def detect(save_img=False):
 
                 # Deep SORT: feed detections to the tracker 
                 if len(dets_ppl) != 0:
-                    trackers = deepsort.update(xywhs, confs, im0)
+                    trackers, features = deepsort.update(xywhs, confs, im0)
                     for d in trackers:
                         plot_one_box(d[:-1], im0, label='ID'+str(int(d[-1])), color=colors[1], line_thickness=1)
 
