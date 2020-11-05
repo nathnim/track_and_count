@@ -38,11 +38,14 @@ def detect(save_img=False):
     set_logging()
     device = select_device(opt.device)
     if os.path.exists(out):
-        shutil.rmtree(out)  # delete output folder
+        shutil.rmtree(out)           # delete output folder
     if os.path.exists(opt.features):
         shutil.rmtree(opt.features)  # delete features output folder
-    os.makedirs(out)  # make new output folder
+    if os.path.exists(opt.crops):
+        shutil.rmtree(opt.crops)  # delete output folder with object crops
+    os.makedirs(out)           # make new output folder
     os.makedirs(opt.features)  # make new output folder
+    os.makedirs(opt.crops)     # make new output folder
     half = device.type != 'cpu'  # half precision only supported on CUDA
 
     # Load model
@@ -93,7 +96,6 @@ def detect(save_img=False):
     img = torch.zeros((1, 3, imgsz, imgsz), device=device)  # init img
     _ = model(img.half() if half else img) if device.type != 'cpu' else None  # run once
     for path, img, im0s, vid_cap in dataset:
-        #print("FRAMES PER SECOND ", vid_cap.get(cv2.CAP_PROP_FPS))
         img = torch.from_numpy(img).to(device)
         img = img.half() if half else img.float()  # uint8 to fp16/32
         img /= 255.0  # 0 - 255 to 0.0 - 1.0
@@ -146,15 +148,17 @@ def detect(save_img=False):
                     for d in trackers:
                         ##### DEEP SORT feature object saver ####
                         track_id = d[4]
-                        fname = opt.features+'/ID_{}'.format(track_id)
-                        if not os.path.exists(fname):
-                            os.mkdir(fname)
+                        fname_features = opt.features+'/ID_{}'.format(track_id)
+                        fname_crops = opt.crops+'/ID_{}'.format(track_id) 
+                        if not os.path.exists(fname_features):
+                            os.mkdir(fname_features)
+                            os.mkdir(fname_crops)
                             log_frames['ID_'+str(track_id)] = []
 
                         # choose format to save feature arrays on your machine: 
                         # https://machinelearningmastery.com/how-to-save-a-numpy-array-to-file-for-machine-learning/
                         save_format = 'csv'
-                        filename = fname+"/feature_frame_"+str(dataset.frame)
+                        filename = fname_features+"/feature_frame_"+str(dataset.frame)
                         if save_format == 'csv':
                             savetxt(filename+'.csv', features[track_id], delimiter=',')
                             #data = numpy.loadtxt('data.csv', delimiter=',')
@@ -166,7 +170,9 @@ def detect(save_img=False):
                             # dict_data = load('data.npz'); data = dict_data['arr_0']
                         # update log file with track_id detection history
                         log_frames['ID_'+str(track_id)].append(dataset.frame)
-                        ###############################
+                        # save croped image
+                        im_crop = im0[d[1]:d[3], d[0]:d[2], :]
+                        cv2.imwrite(filename=fname_crops+"/image_crop_"+str(dataset.frame)+'.jpg', img=im_crop)
                         plot_one_box(d[:4], im0, label='ID'+str(int(d[4])), color=colors[1], line_thickness=1)
 
             # DEEP SORT: save updated log file
@@ -205,7 +211,6 @@ def detect(save_img=False):
                         h = int(vid_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
                         vid_writer = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*fourcc), fps, (w, h))
                     vid_writer.write(im0)
-
     if save_txt or save_img:
         print('Results saved to %s' % Path(out))
         if platform.system() == 'Darwin' and not opt.update:  # MacOS
@@ -217,9 +222,10 @@ def detect(save_img=False):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--weights', nargs='+', type=str, default='yolov5s.pt', help='model.pt path(s)')
-    parser.add_argument('--source', type=str, default='inference/images', help='source')  # file/folder, 0 for webcam
-    parser.add_argument('--output', type=str, default='inference/output', help='output folder')  # output folder
+    parser.add_argument('--source', type=str, default='inference/images', help='source')                      # file/folder, 0 for webcam
+    parser.add_argument('--output', type=str, default='inference/output', help='output folder')               # output folder
     parser.add_argument('--features', type=str, default='inference/features', help='features output folder')  # feature output folder
+    parser.add_argument('--crops', type=str, default='inference/image_crops', help='save object crops')       # save object crops
     parser.add_argument('--img-size', type=int, default=640, help='inference size (pixels)')
     parser.add_argument('--conf-thres', type=float, default=0.4, help='object confidence threshold')
     parser.add_argument('--iou-thres', type=float, default=0.5, help='IOU threshold for NMS')
