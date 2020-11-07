@@ -53,17 +53,33 @@ through longer periods of occlusions, effectively reducing the number of identit
 of the tracker inside the YOLOv5 inference script could be found in *track_yolov5_deepsort.py*. The Jupyter
 notebook *run_deepsort_tracker_on_colab.ipynb* shows how to run the tracker on **Google Colab**.
 
-**Appearance features(in progress)**
+**Long-term memory**
 
-There might be a situation when the security guards or the election board members approach an urn several times during the day.
-We must distinguish these cases from voting. In order to do it, we save the appearance features for each person (with a unique ID) 
-approaching an urn and compare them with similarity metrics already implemented in Deep SORT.
+Both trackers listed above possess only a short-term memory. The object's track is erased from memory after max_age number of frames
+without associated detections. Typically max_age is around 10-100 frames. If a person leaves a room and comes back in a while, the
+tracker will not re-identify the person assigning a new ID instead. To solve this issue, one needs a long-term memory. Here we implement
+long-term memory by means of appearance features from the Deep Sort algorithm. Appearance feature vector is a 1D array with 512 components. 
+For each track ID we create a separate folder into which we write feature vectors. Feature vectors files are labeled in their names with 
+frame number index where the object has been detected. When a new track is identified, one can compute the cosine distance between this 
+track and all saved tracks in appearance space. If the distance is smaller than some threshold value, an old ID could be reassigned to 
+a new object. Long-term memory enables us to exclude the security guards or the election board members who approach an urn frequently.
+
+Feature extractor script is *deepsort_features.py*. Besides the standard output video file, it also writes features and corresponding croped
+images of tracked objects being saved into inference/features and inference/image_crops folders respectively. The log file with dictionary 
+storing the history of object detections is in inference/features/log_detection.txt. Keys of this dictionary are track IDs
+and values are lists with frame numbers where the corresponding track has been registered. Moreover, we save frames per second rate which enables
+us to restore the time (instead of frame number) when the track is detected.
+
+**Human-urn interection (in progress)**
+
+Identify a voting act on video distiguishing it from other actions.
 
 **Content:**
 
 - track_yolov5_sort.py implements the SORT tracker in YOLOv5
 - track_yolov5_deepsort.py implements the Deep SORT tracker in YOLOv5
 - run_sort_tracker_on_colab.ipynb and run_deepsort_tracker_on_colab.ipynb shows how to run the trackers on google colab. 
+- deepsort_features.py implements the feature extractor
 - folder 'theory' contains the slides with summary of theoretical approaches  
 
 ## Voting. Problem statement.
@@ -85,7 +101,6 @@ voters is built, one can run a neural network to find the unique voters based on
 
 **TO DO:**
 - Think about the intersection of units (IoU) in support/in instead of the critical radius
-- Create a set of bbox snapshots for each ID
 - **Counter**: NN to identify the number of unique people from the dataset
 
 ## How to run the trackers
@@ -99,13 +114,15 @@ voters is built, one can run a neural network to find the unique voters based on
     ./yolov5/weights/download_weights.sh   
     ./deep_sort/deep_sort/deep/checkpoint/download_weights.sh
 
-3. Run the tracker: YOLOv5 + (SORT, Deep SORT)
+3. Run the tracker: YOLOv5 + (SORT or Deep SORT)
 
      python3 track_yolov5_sort.py --source example/running.mp4 --weights yolov5/weights/yolov5s.pt --conf 0.4 --max_age 50 --min_hits 10 --iou_threshold 0.3
 
      python3 track_yolov5_deepsort.py --source 'example/running.mp4' --weights 'yolov5/weights/yolov5s.pt'
 
-     python3 deepsort_features.py --source 'example/running.mp4' --weights 'yolov5/weights/yolov5s.pt' --device "cpu"
+4. Run feature extractor
+
+     python3 deepsort_features.py --source 'example/running.mp4' --weights 'yolov5/weights/yolov5s.pt'
 
 ## Theory
 
