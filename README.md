@@ -124,6 +124,10 @@ voters is built, one can run a neural network to find the unique voters based on
 
      python3 deepsort_features.py --source 'example/running.mp4' --weights 'yolov5/weights/yolov5s.pt'
 
+5. Run counter
+
+     python3 track_yolov5_voting.py --source 'video_examples/election_2018_sample_1.mp4' --weights 'yolov5/weights/yolov5s.pt'
+
 ## Theory
 
 In order to avoid the fit-predict style of the project, I try to understanid the theory behind the modern trackers and detectors.
