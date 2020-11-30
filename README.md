@@ -3,14 +3,16 @@
 The aim of this project is to count the number of unique people voting in a room during the day.
 The project is devided into several steps:
 
-1. Custom object (an urn) detection (done)
-2. People tracking (done)
-3. Counting unique people (in progress)
+1. Custom object (an urn) detection
+2. People tracking
+3. Counting unique voters
+4. Reidentification 
 
-Each of these tasks is a separate topic itself and could be generalized further to be used for other purposes.
-For instance, **tasks 2 and 3** could be employed to count the number of unique customers in a shop *etc*.  
+Each of these tasks is a separate topic itself and could be generalized further to be used for other purposes. For instance, **tasks 2, 3 and 4** could be employed to count the number of unique customers in a shop *etc*.  
 
-**For the description of how the problem is tackled, go directly to the 'Voting. Problem statement' section below.**
+![Gif example](https://github.com/maxmarkov/track_and_count/blob/master/example/example_count.gif)
+
+**The details of each step are explained below:**
 
 ## Custom object detection 
 
@@ -53,7 +55,24 @@ through longer periods of occlusions, effectively reducing the number of identit
 of the tracker inside the YOLOv5 inference script could be found in *track_yolov5_deepsort.py*. The Jupyter
 notebook *run_deepsort_tracker_on_colab.ipynb* shows how to run the tracker on **Google Colab**.
 
-**Long-term memory**
+**Human-urn interection (in progress)**
+Since our primary task is to count the number of unique voters but not the total number of people in a room (some people like kids
+often just accomany their parents who vote), it is important to define the voting act in a more precise way. Both an urn and voters are
+identified using the YOLOv5 detector which puts a bounding box around each of them. To vote, a person must come close to an urn and
+spend a certain amount of time around (i.e. the distance between the object centroids must be within a certain critical radius). This
+"certain amount of time" is necessary to distinguish the people who pass by and the ones who actually vote. This approach requires two
+predefined **parameters**:
+
+- Critical radius
+- Minimum interaction time
+
+The person whose motion satisfies the conditions defined above can be then tracked until he/she dissapears from the camera view. The
+tracking is necessary in case the person stays in a room hanging around for a while. To further insure that we count the unique people only,
+one can save an image of each tracked person inside the bound box building a database of voters in a video. When the dateset of images with
+voters is built, one can run a neural network to find the unique voters based on their appearance similarity.
+
+
+**Reidentification (long-term memory)**
 
 Both trackers listed above possess only a short-term memory. The object's track is erased from memory after max_age number of frames
 without associated detections. Typically max_age is around 10-100 frames. If a person leaves a room and comes back in a while, the
@@ -70,38 +89,14 @@ storing the history of object detections is in inference/features/log_detection.
 and values are lists with frame numbers where the corresponding track has been registered. Moreover, we save frames per second rate which enables
 us to restore the time (instead of frame number) when the track is detected.
 
-**Human-urn interection (in progress)**
-
-Identify a voting act on video distiguishing it from other actions.
-
 **Content:**
 
 - track_yolov5_sort.py implements the SORT tracker in YOLOv5
 - track_yolov5_deepsort.py implements the Deep SORT tracker in YOLOv5
 - run_sort_tracker_on_colab.ipynb and run_deepsort_tracker_on_colab.ipynb shows how to run the trackers on google colab. 
+- track_yolov5_counter.py runs a counter
 - deepsort_features.py implements the feature extractor
 - folder 'theory' contains the slides with summary of theoretical approaches  
-
-## Voting. Problem statement.
-
-Since our primary task is to count the number of unique voters but not the total number of people in a room (some people like kids
-often just accomany their parents who vote), it is important to define the voting act in a more precise way. Both an urn and voters are
-identified using the YOLOv5 detector which puts a bounding box around each of them. To vote, a person must come close to an urn and 
-spend a certain amount of time around (i.e. the distance between the object centroids must be within a certain critical radius). This 
-"certain amount of time" is necessary to distinguish the people who pass by and the ones who actually vote. This approach requires two
-predefined **parameters**: 
-
-- Critical radius
-- Minimum interaction time
-
-The person whose motion satisfies the conditions defined above can be then tracked until he/she dissapears from the camera view. The 
-tracking is necessary in case the person stays in a room hanging around for a while. To further insure that we count the unique people only,
-one can save an image of each tracked person inside the bound box building a database of voters in a video. When the dateset of images with
-voters is built, one can run a neural network to find the unique voters based on their appearance similarity.     
-
-**TO DO:**
-- Think about the intersection of units (IoU) in support/in instead of the critical radius
-- **Counter**: NN to identify the number of unique people from the dataset
 
 ## How to run the trackers
 
