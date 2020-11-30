@@ -1,6 +1,6 @@
 # Project objective and description
 
-The aim of this project is to count the number of unique people voting in a room during the day.
+The aim of this project is to count the number of unique people voting in a room during the election day.
 The project is devided into several steps:
 
 1. Custom object (an urn) detection
@@ -32,7 +32,7 @@ object class. Finaly, the inference is done on a subset of data and the result i
 the dectection can be performed on a single (initial) video frame. Then, the urn's coordinares could
 be easily passed further to other frames without performing the detection task over and over again. 
 
-## Track and count
+## Tracking
 
 In the second part of the project we track people in a room using the tracking-by-detection paradigm.
 As it has been done earlier in the custom object detection section, **YOLOv5** performs a person
@@ -55,7 +55,8 @@ through longer periods of occlusions, effectively reducing the number of identit
 of the tracker inside the YOLOv5 inference script could be found in *track_yolov5_deepsort.py*. The Jupyter
 notebook *run_deepsort_tracker_on_colab.ipynb* shows how to run the tracker on **Google Colab**.
 
-**Human-urn interection (in progress)**
+## Counting
+
 Since our primary task is to count the number of unique voters but not the total number of people in a room (some people like kids
 often just accomany their parents who vote), it is important to define the voting act in a more precise way. Both an urn and voters are
 identified using the YOLOv5 detector which puts a bounding box around each of them. To vote, a person must come close to an urn and
@@ -72,7 +73,7 @@ one can save an image of each tracked person inside the bound box building a dat
 voters is built, one can run a neural network to find the unique voters based on their appearance similarity.
 
 
-**Reidentification (long-term memory)**
+## Reidentification
 
 Both trackers listed above possess only a short-term memory. The object's track is erased from memory after max_age number of frames
 without associated detections. Typically max_age is around 10-100 frames. If a person leaves a room and comes back in a while, the
@@ -115,18 +116,19 @@ us to restore the time (instead of frame number) when the track is detected.
 
      python3 track_yolov5_deepsort.py --source 'example/running.mp4' --weights 'yolov5/weights/yolov5s.pt'
 
-4. Run feature extractor
+4. Run the counter
+
+     python3 track_yolov5_counter.py --source 'video_examples/election_2018_sample_1.mp4' --weights 'yolov5/weights/yolov5s.pt'
+
+
+5. Run the feature extractor
 
      python3 deepsort_features.py --source 'example/running.mp4' --weights 'yolov5/weights/yolov5s.pt'
 
-5. Run counter
-
-     python3 track_yolov5_voting.py --source 'video_examples/election_2018_sample_1.mp4' --weights 'yolov5/weights/yolov5s.pt'
 
 ## Theory
 
-In order to avoid the fit-predict style of the project, I try to understanid the theory behind the modern trackers and detectors.
-I summarize my knowledge in folder "theory" where I have slides and notes on related subjects (constantly updated). 
+Some theoretical aspects of tracking and person reidentification are summarized in the Theory folder  
 
 ## Literature
 
