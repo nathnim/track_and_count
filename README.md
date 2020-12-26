@@ -125,6 +125,17 @@ us to restore the time (instead of frame number) when the track is detected.
 
      python3 deepsort_features.py --source 'example/running.mp4' --weights 'yolov5/weights/yolov5s.pt'
 
+## How to detect urns.
+
+1. Extract some snapshot frames
+
+     python3 utils/extract_frames.py --source 'video_examples/election_2018_sample_1.mp4' --destination './' --start 1 --end 10000 --step 1000
+
+2. Run the detector which saves the coordinates into .txt file
+
+     python3 yolov5/detect.py --weights urn_detection_yolov5/weights_best_urn.pt --img 416 --conf 0.2 --source 'utils/snapshot_frames' --save-txt
+
+The results can be found in inference/output.  
 
 ## Theory
 
