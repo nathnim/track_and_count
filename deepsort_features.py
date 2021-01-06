@@ -26,8 +26,8 @@ from utils.general import (
 from utils.torch_utils import select_device, load_classifier, time_synchronized
 
 # deep sort part
-from deep_sort.utils.parser import get_config
-from deep_sort.deep_sort import DeepSort
+from libraries.deep_sort.utils.parser import get_config
+from libraries.deep_sort.deep_sort import DeepSort
 
 def detect(save_img=False):
     out, source, weights, view_img, save_txt, imgsz = \

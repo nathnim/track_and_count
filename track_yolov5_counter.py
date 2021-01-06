@@ -23,10 +23,11 @@ from utils.general import (
 from utils.torch_utils import select_device, load_classifier, time_synchronized
 
 # deep sort part
-from deep_sort.utils.parser import get_config
-from deep_sort.deep_sort import DeepSort
+from libraries.deep_sort.utils.parser import get_config
+from libraries.deep_sort.deep_sort import DeepSort
 from scipy.spatial import distance as dist
 import glob
+import json
 
 def detect(save_img=False):
     out, source, weights, view_img, save_txt, imgsz = \
@@ -133,9 +134,9 @@ def detect(save_img=False):
         # URN: show critical radius and centroid 
         radius = opt.radius*np.linalg.norm(xyxy_ref[0:2]-centroid_ref[0])
 
-        cv2.line(im0s, tuple(xyxy_ref[0:2].astype(int)), tuple(centroid_ref[0].astype(int)), (255, 255, 255), thickness=1, lineType=8)
+        #cv2.line(im0s, tuple(xyxy_ref[0:2].astype(int)), tuple(centroid_ref[0].astype(int)), (255, 255, 255), thickness=1, lineType=8)
         cv2.circle(im0s, tuple(centroid_ref[0].astype(int)), radius=1, color=(255, 255, 255), thickness=4)
-        cv2.circle(im0s, tuple(centroid_ref[0].astype(int)), radius=radius.astype(int), color=(255, 255, 255), thickness=1)
+        #cv2.circle(im0s, tuple(centroid_ref[0].astype(int)), radius=radius.astype(int), color=(255, 255, 255), thickness=1)
 
         # Apply Classifier
         if classify:
@@ -184,16 +185,31 @@ def detect(save_img=False):
                         D = dist.cdist(centroid_ref, centroid_obj, metric="euclidean")
                         if D < radius:
                             if d[-1] not in list(voters.keys()):
-                                voters[d[-1]] = {'initial_frame': dataset.frame, 'frame': dataset.frame, 'distance': D, 'centroid_coords': centroid_obj}
+                                voters[d[-1]] = {'initial frame': dataset.frame, dataset.frame: {'distance': D[0,0], 'centroid_coords': centroid_obj[0,:].tolist()}}
                             else:
-                                initial_frame = voters[d[-1]]['initial_frame']
-                                frame_counter = dataset.frame - initial_frame
-                                voters[d[-1]] = {'initial_frame': initial_frame, 'frame': dataset.frame, 'distance': D, 'centroid_coords': centroid_obj}
+                                frame_counter = dataset.frame - voters[d[-1]]['initial frame']
+                                voters[d[-1]][dataset.frame] = {'distance': D[0,0], 'centroid_coords': centroid_obj[0,:].tolist()}
                                 if frame_counter > critical_time_frames:
                                     voters_count[d[-1]] = True
                             plot_one_box(d[:-1], im0, label='ID'+str(int(d[-1])), color=(0,0,255), line_thickness=1) # plot bbox in red
                             #cv2.putText(im0,'ID '+str(int(d[-1])), (50,50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0,0,255), 2)
+
             cv2.putText(im0,'Voted '+str(len(voters_count)), (50,50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0,0,255), 2)
+
+            print('NUM VOTERS', len(voters))
+            print(list(voters.keys()))
+
+            if len(voters) > 0:  
+                for ids in list(voters.keys()):
+                    last_frame = list(voters[ids].keys())[-1]
+                    # remove 100 frames after the latest detection
+                    if dataset.frame - last_frame > 100:
+                        # write only the ones respecting the critical time condition
+                        #if voters_count[ids] == True:
+                        with open('track_'+str(ids)+'.json', 'w') as json_file:
+                            json.dump(voters[ids], json_file)
+                        del voters[ids]
+                    print(ids, last_frame)
 
             # Print time (inference + NMS)
             print('%sDone. (%.3fs)' % (s, t2 - t1))
