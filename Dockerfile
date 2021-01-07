@@ -69,6 +69,9 @@ RUN git clone https://github.com/maxmarkov/track_and_count && \
     cd track_and_count/libraries/alphapose && \
     python setup.py build develop
 
+RUN cd track_and_count && \
+    ./yolov5/weights/download_weights.sh && \
+    ./deep_sort/deep_sort/deep/checkpoint/download_weights.sh
 
 # TO DO: 
 # Add automatic weights downloader
