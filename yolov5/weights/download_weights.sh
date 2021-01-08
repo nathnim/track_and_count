@@ -1,6 +1,6 @@
 #!/bin/bash
 # Download common models
-
+cd yolov5 && \
 python -c "
 from utils.google_utils import *;
 attempt_download('weights/yolov5s.pt');

@@ -1,5 +1,7 @@
 FROM nvidia/cuda:10.2-devel-ubuntu18.04
 
+#RUN groupadd -r docker && useradd -r -g docker docker
+#USER docker
 USER root
 WORKDIR /docker
 
@@ -73,6 +75,3 @@ RUN cd track_and_count && \
     ./yolov5/weights/download_weights.sh && \
     ./libraries/deep_sort/deep_sort/deep/checkpoint/download_weights.sh && \
     ./libraries/alphapose/download_weights.sh
-
-# TO DO: 
-# Add automatic weights downloader
