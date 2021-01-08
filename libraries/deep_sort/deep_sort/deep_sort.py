@@ -17,7 +17,7 @@ class DeepSort(object):
         self.min_confidence = min_confidence
         self.nms_max_overlap = nms_max_overlap
 
-        self.extractor = Extractor(model_path, use_cuda=use_cuda)
+        self.extractor = Extractor('libraries/'+model_path, use_cuda=use_cuda)
 
         max_cosine_distance = max_dist
         nn_budget = 100
