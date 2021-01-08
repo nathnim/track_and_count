@@ -76,11 +76,12 @@ def detect(save_img=False):
 
     #################################################################################
     # read file with the urn coordinates and convert them into xyxy format
-    frames_urn = glob.glob('labels/'+opt.source.split('/')[-1].split('.')[0]+'_*')
+    #frames_urn = glob.glob('labels/'+opt.source.split('/')[-1].split('.')[0]+'_*')
+    frames_urn = opt.urn
     if len(frames_urn) == 0:
         raise ValueError('No file with urn coordinates is found in labels folder. Please provide urn coordinates!')
-
-    with open(frames_urn[0], 'r') as f:
+    print(frames_urn)
+    with open(frames_urn, 'r') as f:
         xywh_urn = [float(i) for i in f.readline().split()[1:]]
         xywh_urn = np.array(xywh_urn).reshape(1,len(xywh_urn))
         xyxy_urn = xywh2xyxy(xywh_urn).flatten()
@@ -134,9 +135,9 @@ def detect(save_img=False):
         # URN: show critical radius and centroid 
         radius = opt.radius*np.linalg.norm(xyxy_ref[0:2]-centroid_ref[0])
 
-        #cv2.line(im0s, tuple(xyxy_ref[0:2].astype(int)), tuple(centroid_ref[0].astype(int)), (255, 255, 255), thickness=1, lineType=8)
+        cv2.line(im0s, tuple(xyxy_ref[0:2].astype(int)), tuple(centroid_ref[0].astype(int)), (255, 255, 255), thickness=1, lineType=8)
         cv2.circle(im0s, tuple(centroid_ref[0].astype(int)), radius=1, color=(255, 255, 255), thickness=4)
-        #cv2.circle(im0s, tuple(centroid_ref[0].astype(int)), radius=radius.astype(int), color=(255, 255, 255), thickness=1)
+        cv2.circle(im0s, tuple(centroid_ref[0].astype(int)), radius=radius.astype(int), color=(255, 255, 255), thickness=1)
 
         # Apply Classifier
         if classify:
@@ -263,6 +264,7 @@ if __name__ == '__main__':
     parser.add_argument("--config_deepsort", type=str, default="deep_sort/configs/deep_sort.yaml")
     parser.add_argument('--radius', type=float, default=1.1, help='critical radius between urn and person in urn radius units')
     parser.add_argument('--time', type=float, default=2, help='critical time (in seconds) a person spends inside the critical sphere')
+    parser.add_argument('--urn', type=str, default='labels/election_2018_sample_1_0000001000.txt', help='path to txt file with urn coordinates')
     opt = parser.parse_args()
     print(opt)
 
