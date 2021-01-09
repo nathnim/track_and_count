@@ -41,7 +41,7 @@ between each other to re-identify the same person. **The SORT tracker** combines
 to predict the state of the object (*the motion model*) and the Hungarian algorithm to associate objects 
 from the previous frames with objects in the current frame. The tracker does not take into account any details
 of the object's appearence. My implementation of the SORT tracker inside the YOLOv5 inference script could be found in 
-*track_yolov5_sort.py*. The Jupyter notebook *run_sort_tracker_on_colab.ipynb* shows how to run the
+*track_yolov5_sort.py*. The Jupyter notebook *colabs/run_sort_tracker_on_colab.ipynb* shows how to run the
 tracker on **Google Colab**.
 
 **Example of tracking in a room using SORT and YOLOv5**
@@ -53,7 +53,7 @@ A nice alternative to the SORT tracker is a [Deep SORT](https://arxiv.org/pdf/17
 model in addition to the motion model. According to the authors, this extension enables to track objects
 through longer periods of occlusions, effectively reducing the number of identity switches. My implemention
 of the tracker inside the YOLOv5 inference script could be found in *track_yolov5_deepsort.py*. The Jupyter
-notebook *run_deepsort_tracker_on_colab.ipynb* shows how to run the tracker on **Google Colab**.
+notebook *colabs/run_deepsort_tracker_on_colab.ipynb* shows how to run the tracker on **Google Colab**.
 
 ## Counting
 
@@ -94,16 +94,14 @@ us to restore the time (instead of frame number) when the track is detected.
 
 - track_yolov5_sort.py implements the SORT tracker in YOLOv5
 - track_yolov5_deepsort.py implements the Deep SORT tracker in YOLOv5
-- run_sort_tracker_on_colab.ipynb and run_deepsort_tracker_on_colab.ipynb shows how to run the trackers on google colab. 
+- colabs/run_sort_tracker_on_colab.ipynb and colabs/run_deepsort_tracker_on_colab.ipynb shows how to run the trackers on google colab. 
 - track_yolov5_counter.py runs a counter
 - deepsort_features.py implements the feature extractor
 - folder 'theory' contains the slides with summary of theoretical approaches  
 
 ## How to run the trackers
 
-1. Install all dependencies:
-
-    pip3 install -r requirements.txt
+1. Follow the installation steps described in INSTALL.md
 
 2. Download weights:
      
