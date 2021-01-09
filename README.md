@@ -12,8 +12,18 @@ Each of these tasks is a separate topic itself and could be generalized further 
 
 ![Gif example](https://github.com/maxmarkov/track_and_count/blob/master/example/example_count.gif)
 
-**The details of each step are explained below:**
+Table of contents
+=================
+- [Custom object detection](#custom-detection)
+- [Tracking](#tracking)
+- [Count](#count)
+- [Reidentification](#reid)
+- [How to run the trackers](#run-tracker)
+- [How to detect urns](#detect-urn)
+- [Literature](#lit)
+- [Codes](#codes)
 
+<a name="custom-detection"></a>
 ## Custom object detection 
 
 The implementation of custom object detection could be found in a folder *urn_detection_yolov5*. 
@@ -32,6 +42,8 @@ object class. Finaly, the inference is done on a subset of data and the result i
 the dectection can be performed on a single (initial) video frame. Then, the urn's coordinares could
 be easily passed further to other frames without performing the detection task over and over again. 
 
+
+<a name="tracking"></a>
 ## Tracking
 
 In the second part of the project we track people in a room using the tracking-by-detection paradigm.
@@ -55,7 +67,8 @@ through longer periods of occlusions, effectively reducing the number of identit
 of the tracker inside the YOLOv5 inference script could be found in *track_yolov5_deepsort.py*. The Jupyter
 notebook *colabs/run_deepsort_tracker_on_colab.ipynb* shows how to run the tracker on **Google Colab**.
 
-## Counting
+<a name="count"></a>
+## Count
 
 Since our primary task is to count the number of unique voters but not the total number of people in a room (some people like kids
 often just accomany their parents who vote), it is important to define the voting act in a more precise way. Both an urn and voters are
@@ -72,7 +85,7 @@ tracking is necessary in case the person stays in a room hanging around for a wh
 one can save an image of each tracked person inside the bound box building a database of voters in a video. When the dateset of images with
 voters is built, one can run a neural network to find the unique voters based on their appearance similarity.
 
-
+<a name="reid"></a>
 ## Reidentification
 
 Both trackers listed above possess only a short-term memory. The object's track is erased from memory after max_age number of frames
@@ -99,30 +112,26 @@ us to restore the time (instead of frame number) when the track is detected.
 - deepsort_features.py implements the feature extractor
 - folder 'theory' contains the slides with summary of theoretical approaches  
 
+<a name="run-tracker"></a>
 ## How to run the trackers
 
 1. Follow the installation steps described in INSTALL.md
 
-2. Download weights:
-     
-    ./yolov5/weights/download_weights.sh   
-    ./deep_sort/deep_sort/deep/checkpoint/download_weights.sh
-
-3. Run the tracker: YOLOv5 + (SORT or Deep SORT)
+2. Run the tracker: YOLOv5 + (SORT or Deep SORT)
 
      python3 track_yolov5_sort.py --source example/running.mp4 --weights yolov5/weights/yolov5s.pt --conf 0.4 --max_age 50 --min_hits 10 --iou_threshold 0.3
 
      python3 track_yolov5_deepsort.py --source 'example/running.mp4' --weights 'yolov5/weights/yolov5s.pt'
 
-4. Run the counter
+3. Run the counter
 
      python3 track_yolov5_counter.py --source 'video_examples/election_2018_sample_1.mp4' --weights 'yolov5/weights/yolov5s.pt'
 
-
-5. Run the feature extractor
+4. Run the feature extractor
 
      python3 deepsort_features.py --source 'example/running.mp4' --weights 'yolov5/weights/yolov5s.pt'
 
+<a name="detect-urn"></a>
 ## How to detect urns.
 
 1. Extract some snapshot frames
@@ -135,10 +144,7 @@ us to restore the time (instead of frame number) when the track is detected.
 
 The results can be found in inference/output.  
 
-## Theory
-
-Some theoretical aspects of tracking and person reidentification are summarized in the Theory folder  
-
+<a name="lit"></a>
 ## Literature
 
 - [Simple Online and Realtime Tracking (SORT)](https://arxiv.org/abs/1602.00763)
@@ -151,6 +157,7 @@ Some theoretical aspects of tracking and person reidentification are summarized 
 - [Kalman and Bayesian Filters in Python (codes)](https://github.com/rlabbe/Kalman-and-Bayesian-Filters-in-Python)
 - [Deep Cosine Metric Learning for Person Re-Identification](https://elib.dlr.de/116408/1/WACV2018.pdf)
 
+<a name="codes"></a>
 ## Codes
 
 - [SORT](https://github.com/abewley/sort)
