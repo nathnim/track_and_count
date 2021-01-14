@@ -90,18 +90,13 @@ def detect(save_img=False):
     args_p = update_config(opt.config_alphapose)
     cfg_p = update_config(args_p.ALPHAPOSE.cfg)
 
-    # Load pose model
     pose_model = builder.build_sppe(cfg_p.MODEL, preset_cfg=cfg_p.DATA_PRESET)
     print(f'Loading pose model from {args_p.ALPHAPOSE.checkpoint}...')
     pose_model.load_state_dict(torch.load(args_p.ALPHAPOSE.checkpoint, map_location=device))
-    print(cfg_p.DATASET)
     pose_dataset = builder.retrieve_dataset(cfg_p.DATASET.TRAIN)
 
-    #if len(args.gpus) > 1:
-    #    pose_model = torch.nn.DataParallel(pose_model, device_ids=args.gpus).to(args.device)
-    #else:
-    #    pose_model.to(args.device)
-    #pose_model.eval()
+    pose_model.to(device)
+    pose_model.eval()
 
     sys.exit()
 

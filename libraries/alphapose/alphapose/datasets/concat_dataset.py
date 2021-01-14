@@ -8,8 +8,8 @@ import bisect
 import torch
 import torch.utils.data as data
 
-from alphapose.models.builder import DATASET, build_dataset
-
+#from alphapose.models.builder import DATASET, build_dataset
+from ..models.builder import DATASET, build_dataset
 
 @DATASET.register_module
 class ConcatDataset(data.Dataset):

@@ -14,8 +14,8 @@ from tqdm import tqdm
 
 from alphapose.utils.presets import SimpleTransform
 from detector.apis import get_detector
-from alphapose.models.builder import DATASET
-
+#from alphapose.models.builder import DATASET
+from ..models.builder import DATASET
 
 @DATASET.register_module
 class coco_wholebody_det(data.Dataset):
