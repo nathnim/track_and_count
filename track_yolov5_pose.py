@@ -33,6 +33,7 @@ from libraries.deep_sort.deep_sort import DeepSort
 # alphapose
 from libraries.alphapose.alphapose.models import builder
 from libraries.alphapose.alphapose.utils.config import update_config
+from libraries.alphapose.alphapose.utils.presets import SimpleTransform
 
 def detect(save_img=False):
     out, source, weights, view_img, save_txt, imgsz = \
@@ -93,12 +94,13 @@ def detect(save_img=False):
     pose_model = builder.build_sppe(cfg_p.MODEL, preset_cfg=cfg_p.DATA_PRESET)
     print(f'Loading pose model from {args_p.ALPHAPOSE.checkpoint}...')
     pose_model.load_state_dict(torch.load(args_p.ALPHAPOSE.checkpoint, map_location=device))
+
     pose_dataset = builder.retrieve_dataset(cfg_p.DATASET.TRAIN)
+    transformation = SimpleTransform(pose_dataset, scale_factor=0, input_size=cfg_p.DATA_PRESET.IMAGE_SIZE, output_size=cfg_p.DATA_PRESET.HEATMAP_SIZE,
+                                     rot=0, sigma=cfg_p.DATA_PRESET.SIGMA, train=False, add_dpg=False, gpu_device=device)
 
     pose_model.to(device)
     pose_model.eval()
-
-    sys.exit()
 
     # Run inference
     t0 = time.time()
@@ -151,15 +153,24 @@ def detect(save_img=False):
                 xywhs = xyxy2xywh(dets_ppl[:,:-1]).to("cpu")
                 confs = dets_ppl[:,4].to("cpu")
 
-                # Alphapose: prepare data in required format and feed to pose estimator
-                #(inps, orig_img, im_name, boxes, scores, ids, cropped_boxes) = det_loader.read()
-                #inps = inps.to(opt.device)
-
                 # Deep SORT: feed detections to the tracker 
                 if len(dets_ppl) != 0:
                     trackers, features = deepsort.update(xywhs, confs, im0)
                     for d in trackers:
+                        inp, cropped_box = transformation.test_transform(im0, d[:-1])
                         plot_one_box(d[:-1], im0, label='ID'+str(int(d[-1])), color=colors[1], line_thickness=1)
+                        # Alpha pose: prepare data in required format and feed to pose estimator
+                        inps, cropped_box = transformation.test_transform(im0, d[:-1])
+                        inps = inps.to(device)
+                        #if self.args.flip:
+                        #    inps = torch.cat((inps, flip(inps)))
+                        #hm = self.pose_model(inps)
+                        #if self.args.flip:
+                        #    hm_flip = flip_heatmap(hm[int(len(hm) / 2):], self.pose_dataset.joint_pairs, shift=True)
+                        #    hm = (hm[0:int(len(hm) / 2)] + hm_flip) / 2
+                        #hm = hm.cpu()
+                        #self.writer.save(boxes, scores, ids, hm, cropped_boxes, orig_img, im_name)
+                        #pose = self.writer.start()
 
             # Print time (inference + NMS)
             print('%sDone. (%.3fs)' % (s, t2 - t1))
