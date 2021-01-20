@@ -34,6 +34,10 @@ from libraries.deep_sort.deep_sort import DeepSort
 from libraries.alphapose.alphapose.models import builder
 from libraries.alphapose.alphapose.utils.config import update_config
 from libraries.alphapose.alphapose.utils.presets import SimpleTransform
+from libraries.alphapose.alphapose.utils.transforms import get_func_heatmap_to_coord
+from libraries.alphapose.alphapose.utils.pPose_nms import pose_nms
+from libraries.alphapose.scripts.demo_api2 import DataWriter
+#from libraries.alphapose.alphapose.utils.vis import vis_frame
 
 def detect(save_img=False):
     out, source, weights, view_img, save_txt, imgsz = \
@@ -91,6 +95,8 @@ def detect(save_img=False):
     args_p = update_config(opt.config_alphapose)
     cfg_p = update_config(args_p.ALPHAPOSE.cfg)
 
+    heatmap_to_coord = get_func_heatmap_to_coord(cfg_p)
+
     pose_model = builder.build_sppe(cfg_p.MODEL, preset_cfg=cfg_p.DATA_PRESET)
     print(f'Loading pose model from {args_p.ALPHAPOSE.checkpoint}...')
     pose_model.load_state_dict(torch.load(args_p.ALPHAPOSE.checkpoint, map_location=device))
@@ -98,6 +104,7 @@ def detect(save_img=False):
     pose_dataset = builder.retrieve_dataset(cfg_p.DATASET.TRAIN)
     transformation = SimpleTransform(pose_dataset, scale_factor=0, input_size=cfg_p.DATA_PRESET.IMAGE_SIZE, output_size=cfg_p.DATA_PRESET.HEATMAP_SIZE,
                                      rot=0, sigma=cfg_p.DATA_PRESET.SIGMA, train=False, add_dpg=False, gpu_device=device)
+    writer = DataWriter(cfg_p, args_p.ALPHAPOSE)
 
     pose_model.to(device)
     pose_model.eval()
@@ -156,21 +163,34 @@ def detect(save_img=False):
                 # Deep SORT: feed detections to the tracker 
                 if len(dets_ppl) != 0:
                     trackers, features = deepsort.update(xywhs, confs, im0)
-                    for d in trackers:
-                        inp, cropped_box = transformation.test_transform(im0, d[:-1])
+
+                    #  
+                    im_name = None
+                    ids = torch.zeros(len(trackers), 1)                                  # ID numbers
+                    scores = torch.ones(len(trackers), 1)                                # confidence scores
+                    boxes = torch.zeros(len(trackers), 4)                                # bounding boxes 
+                    inps = torch.zeros(len(trackers), 3, *cfg_p.DATA_PRESET.IMAGE_SIZE)
+                    cropped_boxes = torch.zeros(len(trackers), 4)                        # cropped_boxes
+                    print('IMAGE SHAPE', im0.shape)
+
+                    for i, d in enumerate(trackers):
                         plot_one_box(d[:-1], im0, label='ID'+str(int(d[-1])), color=colors[1], line_thickness=1)
+
                         # Alpha pose: prepare data in required format and feed to pose estimator
-                        inps, cropped_box = transformation.test_transform(im0, d[:-1])
+                        inps[i], cropped_box = transformation.test_transform(im0, d[:-1])
+                        cropped_boxes[i] = torch.FloatTensor(cropped_box)
+
+                        ids[i,0] = int(d[-1])
+                        boxes[i,:] = torch.from_numpy(d[:-1])
+
+                    ## write and save
+                    if len(trackers) > 0:
                         inps = inps.to(device)
-                        #if self.args.flip:
-                        #    inps = torch.cat((inps, flip(inps)))
-                        #hm = self.pose_model(inps)
-                        #if self.args.flip:
-                        #    hm_flip = flip_heatmap(hm[int(len(hm) / 2):], self.pose_dataset.joint_pairs, shift=True)
-                        #    hm = (hm[0:int(len(hm) / 2)] + hm_flip) / 2
-                        #hm = hm.cpu()
-                        #self.writer.save(boxes, scores, ids, hm, cropped_boxes, orig_img, im_name)
-                        #pose = self.writer.start()
+                        hm = pose_model(inps)
+                        hm = hm.cpu()
+                        writer.save(boxes, scores, ids, hm, cropped_boxes, im0, im_name)
+                        pose = writer.start()
+                        im0 = writer.vis_frame(im0, pose, writer.opt)
 
             # Print time (inference + NMS)
             print('%sDone. (%.3fs)' % (s, t2 - t1))
