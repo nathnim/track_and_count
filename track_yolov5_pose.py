@@ -36,9 +36,28 @@ from libraries.alphapose.alphapose.utils.config import update_config
 from libraries.alphapose.alphapose.utils.presets import SimpleTransform
 from libraries.alphapose.scripts.demo_api2 import DataWriter
 
-#def get_pose_heatmap():
-#
-#    return writer
+def data_alphapose_format(trackers, im0, transformation, image_size):
+    '''
+    Function that prepares YOLOv5 outputs in format suitable for AlphaPose
+    '''
+      
+    im_name = None
+    ids = torch.zeros(len(trackers), 1)                                  # ID numbers
+    scores = torch.ones(len(trackers), 1)                                # confidence scores
+    boxes = torch.zeros(len(trackers), 4)                                # bounding boxes 
+    inps = torch.zeros(len(trackers), 3, *image_size)                    # 
+    cropped_boxes = torch.zeros(len(trackers), 4)                        # cropped_boxes
+
+    for i, d in enumerate(trackers):
+
+        # Alpha pose: prepare data in required format and feed to pose estimator
+        inps[i], cropped_box = transformation.test_transform(im0, d[:-1])
+        cropped_boxes[i] = torch.FloatTensor(cropped_box)
+
+        ids[i,0] = int(d[-1])
+        boxes[i,:] = torch.from_numpy(d[:-1])
+
+    return(boxes, scores, ids, inps, cropped_boxes)
 
 
 def detect(save_img=False):
@@ -165,32 +184,21 @@ def detect(save_img=False):
                 # Deep SORT: feed detections to the tracker 
                 if len(dets_ppl) != 0:
                     trackers, features = deepsort.update(xywhs, confs, im0)
-
-                    #  
-                    im_name = None
-                    ids = torch.zeros(len(trackers), 1)                                  # ID numbers
-                    scores = torch.ones(len(trackers), 1)                                # confidence scores
-                    boxes = torch.zeros(len(trackers), 4)                                # bounding boxes 
-                    inps = torch.zeros(len(trackers), 3, *cfg_p.DATA_PRESET.IMAGE_SIZE)
-                    cropped_boxes = torch.zeros(len(trackers), 4)                        # cropped_boxes
-
                     for i, d in enumerate(trackers):
                         plot_one_box(d[:-1], im0, label='ID'+str(int(d[-1])), color=colors[1], line_thickness=1)
 
-                        # Alpha pose: prepare data in required format and feed to pose estimator
-                        inps[i], cropped_box = transformation.test_transform(im0, d[:-1])
-                        cropped_boxes[i] = torch.FloatTensor(cropped_box)
-
-                        ids[i,0] = int(d[-1])
-                        boxes[i,:] = torch.from_numpy(d[:-1])
-
-                    # write and save
+                    # AlphaPose: prepare YOLOv5 outputs in alphapose format and find pose heat maps as well as skeleton key points
                     if len(trackers) > 0:
 
+                        boxes, scores, ids, inps, cropped_boxes = data_alphapose_format(trackers, im0, transformation, cfg_p.DATA_PRESET.IMAGE_SIZE) 
                         inps = inps.to(device)
+
+                        # pose heat map
                         hm = pose_model(inps)
                         hm = hm.cpu()
-                        writer.save(boxes, scores, ids, hm, cropped_boxes, im0, im_name)
+
+                        # skeleton key points and visualization
+                        writer.save(boxes, scores, ids, hm, cropped_boxes, im0, None) # im_name = None
                         pose = writer.start()
                         im0 = writer.vis_frame(im0, pose, writer.opt)
 
