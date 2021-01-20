@@ -34,10 +34,12 @@ from libraries.deep_sort.deep_sort import DeepSort
 from libraries.alphapose.alphapose.models import builder
 from libraries.alphapose.alphapose.utils.config import update_config
 from libraries.alphapose.alphapose.utils.presets import SimpleTransform
-from libraries.alphapose.alphapose.utils.transforms import get_func_heatmap_to_coord
-from libraries.alphapose.alphapose.utils.pPose_nms import pose_nms
 from libraries.alphapose.scripts.demo_api2 import DataWriter
-#from libraries.alphapose.alphapose.utils.vis import vis_frame
+
+#def get_pose_heatmap():
+#
+#    return writer
+
 
 def detect(save_img=False):
     out, source, weights, view_img, save_txt, imgsz = \
@@ -95,7 +97,7 @@ def detect(save_img=False):
     args_p = update_config(opt.config_alphapose)
     cfg_p = update_config(args_p.ALPHAPOSE.cfg)
 
-    heatmap_to_coord = get_func_heatmap_to_coord(cfg_p)
+    args_p.ALPHAPOSE.tracking = args_p.ALPHAPOSE.pose_track or args_p.ALPHAPOSE.pose_flow or args_p.ALPHAPOSE.detector=='tracker'
 
     pose_model = builder.build_sppe(cfg_p.MODEL, preset_cfg=cfg_p.DATA_PRESET)
     print(f'Loading pose model from {args_p.ALPHAPOSE.checkpoint}...')
@@ -171,7 +173,6 @@ def detect(save_img=False):
                     boxes = torch.zeros(len(trackers), 4)                                # bounding boxes 
                     inps = torch.zeros(len(trackers), 3, *cfg_p.DATA_PRESET.IMAGE_SIZE)
                     cropped_boxes = torch.zeros(len(trackers), 4)                        # cropped_boxes
-                    print('IMAGE SHAPE', im0.shape)
 
                     for i, d in enumerate(trackers):
                         plot_one_box(d[:-1], im0, label='ID'+str(int(d[-1])), color=colors[1], line_thickness=1)
@@ -183,8 +184,9 @@ def detect(save_img=False):
                         ids[i,0] = int(d[-1])
                         boxes[i,:] = torch.from_numpy(d[:-1])
 
-                    ## write and save
+                    # write and save
                     if len(trackers) > 0:
+
                         inps = inps.to(device)
                         hm = pose_model(inps)
                         hm = hm.cpu()
