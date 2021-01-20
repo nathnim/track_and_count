@@ -34,7 +34,8 @@ from libraries.deep_sort.deep_sort import DeepSort
 from libraries.alphapose.alphapose.models import builder
 from libraries.alphapose.alphapose.utils.config import update_config
 from libraries.alphapose.alphapose.utils.presets import SimpleTransform
-from libraries.alphapose.scripts.demo_api2 import DataWriter
+from libraries.alphapose.scripts.demo_track_api import DataWriter
+from libraries.alphapose.alphapose.utils.pPose_nms import write_json
 
 def data_alphapose_format(trackers, im0, transformation, image_size):
     '''
@@ -112,7 +113,7 @@ def detect(save_img=False):
                         max_age=cfg.DEEPSORT.MAX_AGE, n_init=cfg.DEEPSORT.N_INIT, nn_budget=cfg.DEEPSORT.NN_BUDGET,
                         use_cuda=True)
 
-    # Alpha Posse: initialize pose estimator
+    # AlphaPose: initialization
     args_p = update_config(opt.config_alphapose)
     cfg_p = update_config(args_p.ALPHAPOSE.cfg)
 
@@ -129,6 +130,10 @@ def detect(save_img=False):
 
     pose_model.to(device)
     pose_model.eval()
+
+    output_pose = opt.output.split('/')[0] + '/pose'
+    if not os.path.exists(output_pose):
+        os.mkdir(output_pose)
 
     # Run inference
     t0 = time.time()
@@ -198,9 +203,13 @@ def detect(save_img=False):
                         hm = hm.cpu()
 
                         # skeleton key points and visualization
-                        writer.save(boxes, scores, ids, hm, cropped_boxes, im0, None) # im_name = None
-                        pose = writer.start()
-                        im0 = writer.vis_frame(im0, pose, writer.opt)
+                        writer.save(boxes, scores, ids, hm, cropped_boxes, im0, 'frame_'+str(dataset.frame))
+                        pose = writer.start()                                         # dictionary with results
+                        im0 = writer.vis_frame(im0, pose, writer.opt)                 # visualization
+                        # write the result to json:
+                        write_json([pose], output_pose, form=args_p.ALPHAPOSE.format, for_eval=args_p.ALPHAPOSE.eval)
+                        print("Results have been written to json.")
+
 
             # Print time (inference + NMS)
             print('%sDone. (%.3fs)' % (s, t2 - t1))
