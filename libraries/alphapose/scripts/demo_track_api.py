@@ -25,11 +25,10 @@ from detector.apis import get_detector
 from alphapose.utils.vis import getTime
 
 class DetectionLoader():
-    def __init__(self, detector, cfg, opt):
+    def __init__(self, detector, cfg, opt, device):
         self.cfg = cfg
         self.opt = opt
-        self.device = opt.device
-        self.detector = detector
+        self.device = device
 
         self._input_size = cfg.DATA_PRESET.IMAGE_SIZE
         self._output_size = cfg.DATA_PRESET.HEATMAP_SIZE
@@ -45,82 +44,32 @@ class DetectionLoader():
                 rot=0, sigma=self._sigma,
                 train=False, add_dpg=False, gpu_device=self.device)
 
-        self.image = (None, None, None, None)
-        self.det = (None, None, None, None, None, None, None)
-        self.pose = (None, None, None, None, None, None, None)
+        self.pose = (None, None, None, None, None)
 
-    def process(self, im_name, image):
-        # start to pre process images for object detection
-        self.image_preprocess(im_name, image)
-        # start to detect human in images
-        self.image_detection()
-        # start to post process cropped human image for pose estimation
-        self.image_postprocess()
-        return self
-
-    def image_preprocess(self, im_name, image):
-        # expected image shape like (1,3,h,w) or (3,h,w)
-        img = self.detector.image_preprocess(image)
-        if isinstance(img, np.ndarray):
-            img = torch.from_numpy(img)
-        # add one dimension at the front for batch if image shape (3,h,w)
-        if img.dim() == 3:
-            img = img.unsqueeze(0)
-        orig_img = image # scipy.misc.imread(im_name_k, mode='RGB') is depreciated
-        im_dim = orig_img.shape[1], orig_img.shape[0]
-
-        im_name = os.path.basename(im_name)
-
-        with torch.no_grad():
-            im_dim = torch.FloatTensor(im_dim).repeat(1, 2)
-
-        self.image = (img, orig_img, im_name, im_dim)
-
-    def image_detection(self):
-        imgs, orig_imgs, im_names, im_dim_list = self.image
-        if imgs is None:
-            self.det = (None, None, None, None, None, None, None)
-            return
-
-        with torch.no_grad():
-            dets = self.detector.images_detection(imgs, im_dim_list)
-            if isinstance(dets, int) or dets.shape[0] == 0:
-                self.det = (orig_imgs, im_names, None, None, None, None, None)
-                return
-            if isinstance(dets, np.ndarray):
-                dets = torch.from_numpy(dets)
-            dets = dets.cpu()
-            boxes = dets[:, 1:5]
-            scores = dets[:, 5:6]
-            ids = torch.zeros(scores.shape)
-
-        boxes = boxes[dets[:, 0] == 0]
-        if isinstance(boxes, int) or boxes.shape[0] == 0:
-            self.det = (orig_imgs, im_names, None, None, None, None, None)
-            return
-        inps = torch.zeros(boxes.size(0), 3, *self._input_size)
-        cropped_boxes = torch.zeros(boxes.size(0), 4)
-
-        self.det = (orig_imgs, im_names, boxes, scores[dets[:, 0] == 0], ids[dets[:, 0] == 0], inps, cropped_boxes)
-
-    def image_postprocess(self):
-        with torch.no_grad():
-            (orig_img, im_name, boxes, scores, ids, inps, cropped_boxes) = self.det
-            if orig_img is None:
-                self.pose = (None, None, None, None, None, None, None)
-                return
-            if boxes is None or boxes.nelement() == 0:
-                self.pose = (None, orig_img, im_name, boxes, scores, ids, None)
-                return
-
-            for i, box in enumerate(boxes):
-                inps[i], cropped_box = self.transformation.test_transform(orig_img, box)
-                cropped_boxes[i] = torch.FloatTensor(cropped_box)
-
-            self.pose = (inps, orig_img, im_name, boxes, scores, ids, cropped_boxes)
-
-    def read(self):
+    def process(self, trackers, im0):
+        '''
+        Function that prepares YOLOv5 outputs in format suitable for AlphaPose
+        '''
+        ids = torch.zeros(len(trackers), 1)                                  # ID numbers
+        scores = torch.ones(len(trackers), 1)                                # confidence scores
+        boxes = torch.zeros(len(trackers), 4)                                # bounding boxes 
+        inps = torch.zeros(len(trackers), 3, *self._input_size)              # 
+        cropped_boxes = torch.zeros(len(trackers), 4)                        # cropped_boxes
+    
+        for i, d in enumerate(trackers):
+    
+            # Alpha pose: prepare data in required format and feed to pose estimator
+            inps[i], cropped_box = self.transformation.test_transform(im0, d[:-1])
+            cropped_boxes[i] = torch.FloatTensor(cropped_box)
+    
+            ids[i,0] = int(d[-1])
+            boxes[i,:] = torch.from_numpy(d[:-1])
+        self.pose = (inps, boxes, scores, ids, cropped_boxes)
         return self.pose
+    
+    #def read(self):
+    #    print(self.pose)
+    #    return self.pose
 
 
 class DataWriter():
@@ -201,77 +150,54 @@ class DataWriter():
         self.item = (boxes, scores, ids, hm_data, cropped_boxes, orig_img, im_name)
 
 class SingleImageAlphaPose():
-    def __init__(self, args, cfg):
+    def __init__(self, args, cfg, device):
         self.args = args
         self.cfg = cfg
+        self.device = device
 
         # Load pose model
         self.pose_model = builder.build_sppe(cfg.MODEL, preset_cfg=cfg.DATA_PRESET)
 
         print(f'Loading pose model from {args.checkpoint}...')
-        self.pose_model.load_state_dict(torch.load(args.checkpoint, map_location=args.device))
+        self.pose_model.load_state_dict(torch.load(args.checkpoint, map_location=self.device))
         self.pose_dataset = builder.retrieve_dataset(cfg.DATASET.TRAIN)
 
-        self.pose_model.to(args.device)
+        self.pose_model.to(self.device)
         self.pose_model.eval()
-        
-        self.det_loader = DetectionLoader(get_detector(self.args), self.cfg, self.args)
 
-    def process(self, im_name, image):
+        self.det_loader = DetectionLoader(get_detector(self.args), self.cfg, self.args, self.device)
+        
+    def process(self, im_name, image, trackers):
         # Init data writer
         self.writer = DataWriter(self.cfg, self.args)
 
-        runtime_profile = {
-            'dt': [],
-            'pt': [],
-            'pn': []
-        }
         pose = None
         try:
             start_time = getTime()
             with torch.no_grad():
-                (inps, orig_img, im_name, boxes, scores, ids, cropped_boxes) = self.det_loader.process(im_name, image).read()
-                if orig_img is None:
+                (inps, boxes, scores, ids, cropped_boxes) = self.det_loader.process(trackers, image)
+                if image is None:
                     raise Exception("no image is given")
-                if boxes is None or boxes.nelement() == 0:
-                    if self.args.profile:
-                        ckpt_time, det_time = getTime(start_time)
-                        runtime_profile['dt'].append(det_time)
-                    self.writer.save(None, None, None, None, None, orig_img, im_name)
-                    if self.args.profile:
-                        ckpt_time, pose_time = getTime(ckpt_time)
-                        runtime_profile['pt'].append(pose_time)
-                    pose = self.writer.start()
-                    if self.args.profile:
-                        ckpt_time, post_time = getTime(ckpt_time)
-                        runtime_profile['pn'].append(post_time)
-                else:
-                    if self.args.profile:
-                        ckpt_time, det_time = getTime(start_time)
-                        runtime_profile['dt'].append(det_time)
-                    # Pose Estimation
-                    inps = inps.to(self.args.device)
-                    if self.args.flip:
-                        inps = torch.cat((inps, flip(inps)))
-                    hm = self.pose_model(inps)
-                    if self.args.flip:
-                        hm_flip = flip_heatmap(hm[int(len(hm) / 2):], self.pose_dataset.joint_pairs, shift=True)
-                        hm = (hm[0:int(len(hm) / 2)] + hm_flip) / 2
-                    if self.args.profile:
-                        ckpt_time, pose_time = getTime(ckpt_time)
-                        runtime_profile['pt'].append(pose_time)
-                    hm = hm.cpu()
-                    self.writer.save(boxes, scores, ids, hm, cropped_boxes, orig_img, im_name)
-                    pose = self.writer.start()
-                    if self.args.profile:
-                        ckpt_time, post_time = getTime(ckpt_time)
-                        runtime_profile['pn'].append(post_time)
+                #if boxes is None or boxes.nelement() == 0:
+                #    if self.args.profile:
+                #        ckpt_time, det_time = getTime(start_time)
+                #        runtime_profile['dt'].append(det_time)
+                #    self.writer.save(None, None, None, None, None, orig_img, im_name)
+                #    if self.args.profile:
+                #        ckpt_time, pose_time = getTime(ckpt_time)
+                #        runtime_profile['pt'].append(pose_time)
+                #    pose = self.writer.start()
+                #    if self.args.profile:
+                #        ckpt_time, post_time = getTime(ckpt_time)
+                #        runtime_profile['pn'].append(post_time)
+                #else:
+                # Pose Estimation
+                inps = inps.to(self.device)
+                hm = self.pose_model(inps)
+                hm = hm.cpu()
+                self.writer.save(boxes, scores, ids, hm, cropped_boxes, image, im_name)
+                pose = self.writer.start()
 
-            if self.args.profile:
-                print(
-                    'det time: {dt:.4f} | pose time: {pt:.4f} | post processing: {pn:.4f}'.format(
-                        dt=np.mean(runtime_profile['dt']), pt=np.mean(runtime_profile['pt']), pn=np.mean(runtime_profile['pn']))
-                )
             print('===========================> Finish Model Running.')
         except Exception as e:
             print(repr(e))
@@ -286,8 +212,8 @@ class SingleImageAlphaPose():
         return self.writer.orig_img
 
     def vis(self, image, pose):
-        if pose is not None:
-            image = self.writer.vis_frame(image, pose, self.writer.opt)
+        #if pose is not None:
+        image = self.writer.vis_frame(image, pose, self.writer.opt)
         return image
 
     def writeJson(self, final_result, outputpath, form='coco', for_eval=False):

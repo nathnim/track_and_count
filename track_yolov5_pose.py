@@ -31,35 +31,8 @@ from libraries.deep_sort.utils.parser import get_config
 from libraries.deep_sort.deep_sort import DeepSort
 
 # alphapose
-from libraries.alphapose.alphapose.models import builder
 from libraries.alphapose.alphapose.utils.config import update_config
-from libraries.alphapose.alphapose.utils.presets import SimpleTransform
-from libraries.alphapose.scripts.demo_track_api import DataWriter
-from libraries.alphapose.alphapose.utils.pPose_nms import write_json
-
-def data_alphapose_format(trackers, im0, transformation, image_size):
-    '''
-    Function that prepares YOLOv5 outputs in format suitable for AlphaPose
-    '''
-      
-    im_name = None
-    ids = torch.zeros(len(trackers), 1)                                  # ID numbers
-    scores = torch.ones(len(trackers), 1)                                # confidence scores
-    boxes = torch.zeros(len(trackers), 4)                                # bounding boxes 
-    inps = torch.zeros(len(trackers), 3, *image_size)                    # 
-    cropped_boxes = torch.zeros(len(trackers), 4)                        # cropped_boxes
-
-    for i, d in enumerate(trackers):
-
-        # Alpha pose: prepare data in required format and feed to pose estimator
-        inps[i], cropped_box = transformation.test_transform(im0, d[:-1])
-        cropped_boxes[i] = torch.FloatTensor(cropped_box)
-
-        ids[i,0] = int(d[-1])
-        boxes[i,:] = torch.from_numpy(d[:-1])
-
-    return(boxes, scores, ids, inps, cropped_boxes)
-
+from libraries.alphapose.scripts.demo_track_api import SingleImageAlphaPose
 
 def detect(save_img=False):
     out, source, weights, view_img, save_txt, imgsz = \
@@ -119,17 +92,7 @@ def detect(save_img=False):
 
     args_p.ALPHAPOSE.tracking = args_p.ALPHAPOSE.pose_track or args_p.ALPHAPOSE.pose_flow or args_p.ALPHAPOSE.detector=='tracker'
 
-    pose_model = builder.build_sppe(cfg_p.MODEL, preset_cfg=cfg_p.DATA_PRESET)
-    print(f'Loading pose model from {args_p.ALPHAPOSE.checkpoint}...')
-    pose_model.load_state_dict(torch.load(args_p.ALPHAPOSE.checkpoint, map_location=device))
-
-    pose_dataset = builder.retrieve_dataset(cfg_p.DATASET.TRAIN)
-    transformation = SimpleTransform(pose_dataset, scale_factor=0, input_size=cfg_p.DATA_PRESET.IMAGE_SIZE, output_size=cfg_p.DATA_PRESET.HEATMAP_SIZE,
-                                     rot=0, sigma=cfg_p.DATA_PRESET.SIGMA, train=False, add_dpg=False, gpu_device=device)
-    writer = DataWriter(cfg_p, args_p.ALPHAPOSE)
-
-    pose_model.to(device)
-    pose_model.eval()
+    demo = SingleImageAlphaPose(args_p.ALPHAPOSE, cfg_p, device)
 
     output_pose = opt.output.split('/')[0] + '/pose'
     if not os.path.exists(output_pose):
@@ -195,19 +158,12 @@ def detect(save_img=False):
                     # AlphaPose: prepare YOLOv5 outputs in alphapose format and find pose heat maps as well as skeleton key points
                     if len(trackers) > 0:
 
-                        boxes, scores, ids, inps, cropped_boxes = data_alphapose_format(trackers, im0, transformation, cfg_p.DATA_PRESET.IMAGE_SIZE) 
-                        inps = inps.to(device)
+                        pose = demo.process('frame_'+str(dataset.frame), im0, trackers)
 
-                        # pose heat map
-                        hm = pose_model(inps)
-                        hm = hm.cpu()
-
-                        # skeleton key points and visualization
-                        writer.save(boxes, scores, ids, hm, cropped_boxes, im0, 'frame_'+str(dataset.frame))
-                        pose = writer.start()                                         # dictionary with results
-                        im0 = writer.vis_frame(im0, pose, writer.opt)                 # visualization
+                        # visualization
+                        im0 = demo.vis(im0, pose)
                         # write the result to json:
-                        write_json([pose], output_pose, form=args_p.ALPHAPOSE.format, for_eval=args_p.ALPHAPOSE.eval)
+                        demo.writeJson([pose], output_pose, form=args_p.ALPHAPOSE.format, for_eval=args_p.ALPHAPOSE.eval)
                         print("Results have been written to json.")
 
 
