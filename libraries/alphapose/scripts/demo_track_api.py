@@ -25,7 +25,7 @@ from detector.apis import get_detector
 from alphapose.utils.vis import getTime
 
 class DetectionLoader():
-    def __init__(self, detector, cfg, opt, device):
+    def __init__(self, cfg, opt, device):
         self.cfg = cfg
         self.opt = opt
         self.device = device
@@ -67,10 +67,6 @@ class DetectionLoader():
         self.pose = (inps, boxes, scores, ids, cropped_boxes)
         return self.pose
     
-    #def read(self):
-    #    print(self.pose)
-    #    return self.pose
-
 
 class DataWriter():
     def __init__(self, cfg, opt):
@@ -165,7 +161,7 @@ class SingleImageAlphaPose():
         self.pose_model.to(self.device)
         self.pose_model.eval()
 
-        self.det_loader = DetectionLoader(get_detector(self.args), self.cfg, self.args, self.device)
+        self.det_loader = DetectionLoader(self.cfg, self.args, self.device)
         
     def process(self, im_name, image, trackers):
         # Init data writer
@@ -176,21 +172,6 @@ class SingleImageAlphaPose():
             start_time = getTime()
             with torch.no_grad():
                 (inps, boxes, scores, ids, cropped_boxes) = self.det_loader.process(trackers, image)
-                if image is None:
-                    raise Exception("no image is given")
-                #if boxes is None or boxes.nelement() == 0:
-                #    if self.args.profile:
-                #        ckpt_time, det_time = getTime(start_time)
-                #        runtime_profile['dt'].append(det_time)
-                #    self.writer.save(None, None, None, None, None, orig_img, im_name)
-                #    if self.args.profile:
-                #        ckpt_time, pose_time = getTime(ckpt_time)
-                #        runtime_profile['pt'].append(pose_time)
-                #    pose = self.writer.start()
-                #    if self.args.profile:
-                #        ckpt_time, post_time = getTime(ckpt_time)
-                #        runtime_profile['pn'].append(post_time)
-                #else:
                 # Pose Estimation
                 inps = inps.to(self.device)
                 hm = self.pose_model(inps)

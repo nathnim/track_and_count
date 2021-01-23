@@ -1,8 +1,3 @@
-'''
-YOLOV5 DETECTOR + DEEP SORT TRACKER + ALPHA POSE ESTIMATOR
-            Development is in progress
-'''
-
 import sys
 sys.path.insert(0, './yolov5')
 
