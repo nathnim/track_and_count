@@ -112,37 +112,40 @@ us to restore the time (instead of frame number) when the track is detected.
 - deepsort_features.py implements the feature extractor
 - folder 'theory' contains the slides with summary of theoretical approaches  
 
+<a name="detect-urn"></a>
+## How to detect urns.
+
+1. Extract some snapshot frames into snapshot_frames folder
+
+     python3 utils/extract_frames.py --source video_examples/election_2018_sample_1.mp4 --destination snapshot_frames --start 1 --end 10000 --step 1000
+
+2. Run the detector which saves the coordinates into .txt file in urn_coordinates folder
+
+     python3 yolov5/detect.py --weights urn_detection_yolov5/weights_best_urn.pt --img 416 --conf 0.2 --source snapshot_frames --output urn_coordinates --save-txt
+
 <a name="run-tracker"></a>
 ## How to run the trackers
 
 1. Follow the installation steps described in INSTALL.md
 
-2. Run the tracker: YOLOv5 + (SORT or Deep SORT)
+2. Run tracker: YOLOv5 + (SORT or Deep SORT)
 
      python3 track_yolov5_sort.py --source example/running.mp4 --weights yolov5/weights/yolov5s.pt --conf 0.4 --max_age 50 --min_hits 10 --iou_threshold 0.3
 
-     python3 track_yolov5_deepsort.py --source 'example/running.mp4' --weights 'yolov5/weights/yolov5s.pt'
+     python3 track_yolov5_deepsort.py --source example/running.mp4 --weights yolov5/weights/yolov5s.pt
 
-3. Run the counter
+3. Run tracker with pose estimator
 
-     python3 track_yolov5_counter.py --source 'video_examples/election_2018_sample_1.mp4' --weights 'yolov5/weights/yolov5s.pt'
+     python3 track_yolov5_pose.py --source example/running.mp4 --weights yolov5/weights/yolov5s.pt
 
-4. Run the feature extractor
+4. Run the counter
 
-     python3 deepsort_features.py --source 'example/running.mp4' --weights 'yolov5/weights/yolov5s.pt'
+     python3 track_yolov5_counter.py --source video_examples/election_2018_sample_1.mp4 --weights yolov5/weights/yolov5s.pt
 
-<a name="detect-urn"></a>
-## How to detect urns.
+5. Run the feature extractor
 
-1. Extract some snapshot frames
+     python3 deepsort_features.py --source example/running.mp4 --weights yolov5/weights/yolov5s.pt
 
-     python3 utils/extract_frames.py --source 'video_examples/election_2018_sample_1.mp4' --destination './' --start 1 --end 10000 --step 1000
-
-2. Run the detector which saves the coordinates into .txt file
-
-     python3 yolov5/detect.py --weights urn_detection_yolov5/weights_best_urn.pt --img 416 --conf 0.2 --source 'utils/snapshot_frames' --save-txt
-
-The results can be found in inference/output.  
 
 <a name="lit"></a>
 ## Literature
