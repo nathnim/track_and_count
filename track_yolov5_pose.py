@@ -152,15 +152,11 @@ def detect(save_img=False):
 
                     # AlphaPose: prepare YOLOv5 outputs in alphapose format and find pose heat maps as well as skeleton key points
                     if len(trackers) > 0:
-
                         pose = demo.process('frame_'+str(dataset.frame), im0, trackers)
-
                         # visualization
                         im0 = demo.vis(im0, pose)
                         # write the result to json:
                         demo.writeJson([pose], output_pose, form=args_p.ALPHAPOSE.format, for_eval=args_p.ALPHAPOSE.eval)
-                        print("Results have been written to json.")
-
 
             # Print time (inference + NMS)
             print('%sDone. (%.3fs)' % (s, t2 - t1))
@@ -223,3 +219,29 @@ if __name__ == '__main__':
                 strip_optimizer(opt.weights)
         else:
             detect()
+
+# COCO dataset points and their indices:
+
+# ENGLISH:
+#  Nose         [0]
+#  Left Eye     [1], Right Eye     [2],
+#  Left Ear     [3], Right Ear     [4],
+#  Left Shoulder[5], Right Shoulder[6],
+#  Left Elbow   [7], Right Elbow   [8],
+#  Left Wrist   [9], Right Wrist  [10],
+#  Left Hip    [11], Right Hip    [12],
+#  Left Knee   [13], Right knee   [14],
+#  Left Ankle  [15], Right Ankle  [16],
+#  Neck        [17]
+
+# RUSSIAN:
+#  Нос               [0],
+#  левый глаз        [1], правый глаз        [2],
+#  левое ухо         [3], правое ухо         [4],
+#  левое плечо       [5], правое плечо       [6],
+#  левый локоть      [7], правый локоть      [8],
+#  левое запястье    [9], правое запястье   [10],
+#  левое бедро      [11], правое бедро      [12],
+#  левое колено     [13], правое колено     [14],
+#  левый голеностоп [15], правый голеностоп [16],
+#  шея              [17]

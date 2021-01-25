@@ -198,6 +198,6 @@ class SingleImageAlphaPose():
         return image
 
     def writeJson(self, final_result, outputpath, form='coco', for_eval=False):
-        from alphapose.utils.pPose_nms import write_json
-        write_json(final_result, outputpath, form=form, for_eval=for_eval)
+        from alphapose.utils.pPose_nms import write_json_counter
+        write_json_counter(final_result, outputpath, form=form, for_eval=for_eval)
         print("Results have been written to json.")

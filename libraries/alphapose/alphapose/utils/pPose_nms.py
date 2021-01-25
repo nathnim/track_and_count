@@ -576,3 +576,38 @@ def write_json(all_results, outputpath, form=None, for_eval=False):
         with open(os.path.join(outputpath,'alphapose-results.json'), 'w') as json_file:
             json_file.write(json.dumps(json_results))
 
+def write_json_counter(all_results, outputpath, form=None, for_eval=False):
+    '''
+    WRITE OUTPUT DATA IN A FORMAT CONVINIENT FOR COUNTING/POSTPROCESSING
+    all_result: result dict of predictions
+    outputpath: output directory
+    '''
+    json_results = []
+    json_results_cmu = {}
+
+    body_parts = ['Nose', 
+            'LEye', 'REye',
+            'LEar', 'REar',
+            'LShoulder', 'RShoulder',
+            'LElbow', 'RElbow',
+            'LWrist', 'RWrist',
+            'LHip', 'RHip',
+            'LKnee', 'Rknee',
+            'LAnkle', 'RAnkle',
+            'Neck']
+
+    for im_res in all_results:
+        im_name = im_res['imgname']
+        for human in im_res['result']:
+            keypoints = []
+            result = {}
+
+            kp_preds = human['keypoints']
+            for n in range(kp_preds.shape[0]):
+                result[body_parts[n]] = kp_preds[n,:].tolist()
+
+            folder = outputpath+'/ID_'+str(int(human['idx'][0]))
+            if not os.path.exists(folder):
+                os.mkdir(folder)
+            with open(os.path.join(folder, im_name+'.json'), 'w') as json_file:
+                json_file.write(json.dumps(result))
