@@ -10,3 +10,4 @@ ALPHAPOSE:
   vis_fast: True                                                                    # 'use fast rendering'
   pose_flow: False                                                                  # 'track humans in video with PoseFlow'
   pose_track: False                                                                 # 'track humans in video with reid'
+  showbox: False                                                                    # 

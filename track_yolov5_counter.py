@@ -25,9 +25,14 @@ from utils.torch_utils import select_device, load_classifier, time_synchronized
 # deep sort part
 from libraries.deep_sort.utils.parser import get_config
 from libraries.deep_sort.deep_sort import DeepSort
-from scipy.spatial import distance as dist
 import glob
-import json
+
+# alphapose
+from libraries.alphapose.alphapose.utils.config import update_config
+from libraries.alphapose.scripts.demo_track_api import SingleImageAlphaPose
+
+# counter
+from counter import VoteCounter
 
 def detect(save_img=False):
     out, source, weights, view_img, save_txt, imgsz = \
@@ -38,12 +43,12 @@ def detect(save_img=False):
     set_logging()
     device = select_device(opt.device)
     if os.path.exists(out):
-        shutil.rmtree(out)  # delete output folder
-    os.makedirs(out)  # make new output folder
-    half = device.type != 'cpu'  # half precision only supported on CUDA
+        shutil.rmtree(out)      # delete output folder
+    os.makedirs(out)            # make new output folder
+    half = device.type != 'cpu' # half precision only supported on CUDA
 
     # Load model
-    model = attempt_load(weights, map_location=device)  # load FP32 model
+    model = attempt_load(weights, map_location=device)   # load FP32 model
     imgsz = check_img_size(imgsz, s=model.stride.max())  # check img_size
     if half:
         model.half()  # to FP16
@@ -72,21 +77,10 @@ def detect(save_img=False):
     # frames per second
     fps =  dataset.cap.get(cv2.CAP_PROP_FPS)
     critical_time_frames = opt.time*fps
-    print('CRITICAL TIME IS ', opt.time, 'sec, or ', critical_time_frames, ' frames')
 
-    #################################################################################
-    # read file with the urn coordinates and convert them into xyxy format
-    #frames_urn = glob.glob('labels/'+opt.source.split('/')[-1].split('.')[0]+'_*')
-    frames_urn = opt.urn
-    if len(frames_urn) == 0:
-        raise ValueError('No file with urn coordinates is found in labels folder. Please provide urn coordinates!')
-    print(frames_urn)
-    with open(frames_urn, 'r') as f:
-        xywh_urn = [float(i) for i in f.readline().split()[1:]]
-        xywh_urn = np.array(xywh_urn).reshape(1,len(xywh_urn))
-        xyxy_urn = xywh2xyxy(xywh_urn).flatten()
-    f.close()
-    ################################################################################
+    # COUNTER: initialization
+    counter = VoteCounter(critical_time_frames)
+    print('CRITICAL TIME IS ', opt.time, 'sec, or ', counter.critical_time, ' frames')
 
     # Find index corresponding to a person
     idx_person = names.index("person")
@@ -100,9 +94,17 @@ def detect(save_img=False):
                         max_age=cfg.DEEPSORT.MAX_AGE, n_init=cfg.DEEPSORT.N_INIT, nn_budget=cfg.DEEPSORT.NN_BUDGET,
                         use_cuda=True)
 
-    # VOTE: main dictionary accumulating information about all people approaching the urn (i.e. coming into critical sphere) 
-    voters = {}
-    voters_count = {}
+    # AlphaPose: initialization
+    args_p = update_config(opt.config_alphapose)
+    cfg_p = update_config(args_p.ALPHAPOSE.cfg)
+
+    args_p.ALPHAPOSE.tracking = args_p.ALPHAPOSE.pose_track or args_p.ALPHAPOSE.pose_flow
+
+    demo = SingleImageAlphaPose(args_p.ALPHAPOSE, cfg_p, device)
+
+    output_pose = opt.output.split('/')[0] + '/pose'
+    if not os.path.exists(output_pose):
+        os.mkdir(output_pose)
 
     # Run inference
     t0 = time.time()
@@ -123,21 +125,10 @@ def detect(save_img=False):
         pred = non_max_suppression(pred, opt.conf_thres, opt.iou_thres, classes=opt.classes, agnostic=opt.agnostic_nms)
         t2 = time_synchronized()
 
-        # URN centroid:
-        gn_array = [im0s.shape[1], im0s.shape[0], im0s.shape[1], im0s.shape[0]]
-        xyxy_ref = np.multiply(gn_array, xyxy_urn)
-        xywh_ref = xyxy2xywh(xyxy_ref.reshape((1,4)))[0] 
-        centroid_ref = xywh_ref[:2].reshape(1,2)
-
-        # URN: plot bounding box
-        plot_one_box(xyxy_ref, im0s, color=[255,255,255], line_thickness=1)
-
-        # URN: show critical radius and centroid 
-        radius = opt.radius*np.linalg.norm(xyxy_ref[0:2]-centroid_ref[0])
-
-        cv2.line(im0s, tuple(xyxy_ref[0:2].astype(int)), tuple(centroid_ref[0].astype(int)), (255, 255, 255), thickness=1, lineType=8)
-        cv2.circle(im0s, tuple(centroid_ref[0].astype(int)), radius=1, color=(255, 255, 255), thickness=4)
-        cv2.circle(im0s, tuple(centroid_ref[0].astype(int)), radius=radius.astype(int), color=(255, 255, 255), thickness=1)
+        # COUNTER: compute urn centoid (1st frame only) and plot a bounding box around it
+        if dataset.frame == 1:
+            counter.read_urn_coordinates(opt.urn, im0s, opt.radius)
+        counter.plot_urn_bbox(im0s)
 
         # Apply Classifier
         if classify:
@@ -174,43 +165,31 @@ def detect(save_img=False):
                 # Deep SORT: feed detections to the tracker 
                 if len(dets_ppl) != 0:
                     trackers, features = deepsort.update(xywhs, confs, im0)
+                    # tracks inside a critical sphere
+                    trackers_inside = []
                     for d in trackers:
                         plot_one_box(d[:-1], im0, label='ID'+str(int(d[-1])), color=colors[1], line_thickness=1)
 
-                        # Tracker: show the centroid point for each person
-                        centroid_obj = xyxy2xywh(np.expand_dims(d[:-1], axis=0))[0,:2]
-                        cv2.circle(im0, tuple(centroid_obj), radius=1, color=colors[1], thickness=4)
-                        centroid_obj = np.expand_dims(centroid_obj, axis=0)
+                        # COUNTER
+                        d_include = counter.centroid_distance(d, im0, colors[1], dataset.frame)
+                        if d_include:
+                            trackers_inside.append(d)
 
-                        # VOTE: euclidean distance between the urn and person centroids
-                        D = dist.cdist(centroid_ref, centroid_obj, metric="euclidean")
-                        if D < radius:
-                            if d[-1] not in list(voters.keys()):
-                                voters[d[-1]] = {'initial frame': dataset.frame, dataset.frame: {'distance': D[0,0], 'centroid_coords': centroid_obj[0,:].tolist()}}
-                            else:
-                                frame_counter = dataset.frame - voters[d[-1]]['initial frame']
-                                voters[d[-1]][dataset.frame] = {'distance': D[0,0], 'centroid_coords': centroid_obj[0,:].tolist()}
-                                if frame_counter > critical_time_frames:
-                                    voters_count[d[-1]] = True
-                            plot_one_box(d[:-1], im0, label='ID'+str(int(d[-1])), color=(0,0,255), line_thickness=1) # plot bbox in red
-                            #cv2.putText(im0,'ID '+str(int(d[-1])), (50,50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0,0,255), 2)
+                    # ALPHAPOSE: show skeletons for bounding boxes inside the critical sphere
+                    if len(trackers_inside) > 0:
+                        pose = demo.process('frame_'+str(dataset.frame), im0, trackers_inside)
+                        im0 = demo.vis(im0, pose)
+                        demo.writeJson([pose], output_pose, form=args_p.ALPHAPOSE.format, for_eval=args_p.ALPHAPOSE.eval)
+                        print("Results have been written to json.")
 
-            cv2.putText(im0,'Voted '+str(len(voters_count)), (50,50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0,0,255), 2)
+            cv2.putText(im0,'Voted '+str(len(counter.voters_count)), (50,50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0,0,255), 2)
 
-            print('NUM VOTERS', len(voters))
-            print(list(voters.keys()))
+            print('NUM VOTERS', len(counter.voters))
+            print(list(counter.voters.keys()))
 
-            if len(voters) > 0:  
-                for ids in list(voters.keys()):
-                    last_frame = list(voters[ids].keys())[-1]
-                    # remove 100 frames after the latest detection
-                    if dataset.frame - last_frame > 100:
-                        # write only the ones respecting the critical time condition
-                        #if voters_count[ids] == True:
-                        with open('track_'+str(ids)+'.json', 'w') as json_file:
-                            json.dump(voters[ids], json_file)
-                        del voters[ids]
-                    print(ids, last_frame)
+            # COUNTER
+            if len(counter.voters) > 0:  
+                counter.save_voter_trajectory(dataset.frame)
 
             # Print time (inference + NMS)
             print('%sDone. (%.3fs)' % (s, t2 - t1))
@@ -262,6 +241,7 @@ if __name__ == '__main__':
     parser.add_argument('--augment', action='store_true', help='augmented inference')
     parser.add_argument('--update', action='store_true', help='update all models')
     parser.add_argument("--config_deepsort", type=str, default="deep_sort/configs/deep_sort.yaml")
+    parser.add_argument("--config_alphapose", type=str, default="libraries/alphapose/configs/alphapose.yaml")
     parser.add_argument('--radius', type=float, default=1.1, help='critical radius between urn and person in urn radius units')
     parser.add_argument('--time', type=float, default=2, help='critical time (in seconds) a person spends inside the critical sphere')
     parser.add_argument('--urn', type=str, default='labels/election_2018_sample_1_0000001000.txt', help='path to txt file with urn coordinates')

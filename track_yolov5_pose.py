@@ -85,7 +85,7 @@ def detect(save_img=False):
     args_p = update_config(opt.config_alphapose)
     cfg_p = update_config(args_p.ALPHAPOSE.cfg)
 
-    args_p.ALPHAPOSE.tracking = args_p.ALPHAPOSE.pose_track or args_p.ALPHAPOSE.pose_flow or args_p.ALPHAPOSE.detector=='tracker'
+    args_p.ALPHAPOSE.tracking = args_p.ALPHAPOSE.pose_track or args_p.ALPHAPOSE.pose_flow
 
     demo = SingleImageAlphaPose(args_p.ALPHAPOSE, cfg_p, device)
 
