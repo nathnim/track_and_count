@@ -18,7 +18,7 @@ class VoteCounter():
     def __init__(self, time, fps):
 
         self.critical_time = time       # critical time parameter in frames units
-        #self.log_frames = {"FPS": fps}
+        self.log_frames = {"FPS": fps}
 
         self.voters = {}
         self.voters_count = {}
@@ -87,7 +87,7 @@ class VoteCounter():
             #cv2.putText(image,'ID '+str(int(track[-1])), (50,50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0,0,255), 2)
         return track_inside
 
-    def save_voter_trajectory(self, frame):
+    def save_voter_trajectory(self, frame, outpath):
         '''
         Save voter's trajectory into json file
         '''
@@ -102,30 +102,35 @@ class VoteCounter():
                 del self.voters[ids]
             #print(ids, last_frame)
 
-#    def save_features_and_crops(self, image, frame, track, outpath):
-#        track_id = track[4]
-#        fname_features = outpath+'features/ID_{}'.format(track_id)
-#        fname_crops = outpath+'image_crops/ID_{}'.format(track_id)
-#        if not os.path.exists(fname_features):
-#            os.mkdir(fname_features)
-#            os.mkdir(fname_crops)
-#            self.log_frames['ID_'+str(track_id)] = []
-#
-#        # choose format to save feature arrays on your machine: 
-#        # https://machinelearningmastery.com/how-to-save-a-numpy-array-to-file-for-machine-learning/
-#        save_format = 'csv'
-#        filename = fname_features+"/feature_frame_"+str(dataset.frame)
-#        if save_format == 'csv':
-#            savetxt(filename+'.csv', features[track_id], delimiter=',')
-#            #data = numpy.loadtxt('data.csv', delimiter=',')
-#        elif save_format == 'npy':
-#            save(filename+'.npy', features[track_id])
-#            #data = numpy.load('data.npy')
-#        elif save_format == 'npz':
-#            savez_compressed(filename+'.npz', features[track_id])
-#            # dict_data = load('data.npz'); data = dict_data['arr_0']
-#        # update log file with track_id detection history
-#        self.log_frames['ID_'+str(track_id)].append(frame)
-#        # save croped image
-#        im_crop = image[d[1]:d[3], d[0]:d[2], :]
-#        cv2.imwrite(filename=fname_crops+"/image_crop_"+str(dataset.frame)+'.jpg', img=im_crop)
+    def save_features_and_crops(self, image, frame, tracks, features, outpath):
+        '''
+        Save features and crops into files
+        '''
+        for i, track in enumerate(tracks):
+            track_id = track[4]
+            fname_features = outpath+'/features/ID_{}'.format(track_id)
+            fname_crops = outpath+'/image_crops/ID_{}'.format(track_id)
+            if not os.path.exists(fname_features):
+                os.mkdir(fname_features)
+                os.mkdir(fname_crops)
+                self.log_frames['ID_'+str(track_id)] = []
+
+            # choose format to save feature arrays on your machine: 
+            # https://machinelearningmastery.com/how-to-save-a-numpy-array-to-file-for-machine-learning/
+            save_format = 'csv'
+            filename = fname_features+"/feature_frame_"+str(frame)
+            if save_format == 'csv':
+                savetxt(filename+'.csv', features[track_id], delimiter=',')
+                #data = numpy.loadtxt('data.csv', delimiter=',')
+            elif save_format == 'npy':
+                save(filename+'.npy', features[track_id])
+                #data = numpy.load('data.npy')
+            elif save_format == 'npz':
+                savez_compressed(filename+'.npz', features[track_id])
+                # dict_data = load('data.npz'); data = dict_data['arr_0']
+
+            # update log file with track_id detection history
+            self.log_frames['ID_'+str(track_id)].append(frame)
+            # save croped image
+            im_crop = image[track[1]:track[3], track[0]:track[2], :]
+            cv2.imwrite(filename=fname_crops+"/image_crop_"+str(frame)+'.jpg', img=im_crop)

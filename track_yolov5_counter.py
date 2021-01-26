@@ -42,9 +42,19 @@ def detect(save_img=False):
     # Initialize
     set_logging()
     device = select_device(opt.device)
+    folder_main = out.split('/')[0]
     if os.path.exists(out):
         shutil.rmtree(out)      # delete output folder
-    os.makedirs(out)            # make new output folder
+    folder_features = folder_main+'/features'
+    if os.path.exists(folder_features):
+        shutil.rmtree(folder_features)  # delete features output folder
+    folder_crops = folder_main+'/image_crops' 
+    if os.path.exists(folder_crops):
+        shutil.rmtree(folder_crops)  # delete output folder with object crops
+    os.makedirs(out)                            # make new output folder
+    os.makedirs(folder_features)  # make new output folder
+    os.makedirs(folder_crops)     # make new output folder
+
     half = device.type != 'cpu' # half precision only supported on CUDA
 
     # Load model
@@ -79,7 +89,7 @@ def detect(save_img=False):
     critical_time_frames = opt.time*fps
 
     # COUNTER: initialization
-    counter = VoteCounter(critical_time_frames)
+    counter = VoteCounter(critical_time_frames, fps)
     print('CRITICAL TIME IS ', opt.time, 'sec, or ', counter.critical_time, ' frames')
 
     # Find index corresponding to a person
@@ -167,7 +177,7 @@ def detect(save_img=False):
                     trackers, features = deepsort.update(xywhs, confs, im0)
                     # tracks inside a critical sphere
                     trackers_inside = []
-                    for d in trackers:
+                    for i, d in enumerate(trackers):
                         plot_one_box(d[:-1], im0, label='ID'+str(int(d[-1])), color=colors[1], line_thickness=1)
 
                         # COUNTER
@@ -180,7 +190,8 @@ def detect(save_img=False):
                         pose = demo.process('frame_'+str(dataset.frame), im0, trackers_inside)
                         im0 = demo.vis(im0, pose)
                         demo.writeJson([pose], output_pose, form=args_p.ALPHAPOSE.format, for_eval=args_p.ALPHAPOSE.eval)
-                        print("Results have been written to json.")
+
+                        counter.save_features_and_crops(im0, dataset.frame, trackers_inside, features, folder_main)
 
             cv2.putText(im0,'Voted '+str(len(counter.voters_count)), (50,50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0,0,255), 2)
 
@@ -189,7 +200,7 @@ def detect(save_img=False):
 
             # COUNTER
             if len(counter.voters) > 0:  
-                counter.save_voter_trajectory(dataset.frame)
+                counter.save_voter_trajectory(dataset.frame, folder_main)
 
             # Print time (inference + NMS)
             print('%sDone. (%.3fs)' % (s, t2 - t1))
