@@ -1,14 +1,6 @@
 # Project objective and description
 
-The aim of this project is to count the number of unique people voting in a room during the election day.
-The project is devided into several steps:
-
-1. Custom object (an urn) detection
-2. People tracking
-3. Counting unique voters
-4. Reidentification 
-
-Each of these tasks is a separate topic itself and could be generalized further to be used for other purposes. For instance, **tasks 2, 3 and 4** could be employed to count the number of unique customers in a shop *etc*.  
+Voting is a key procedure enabling society to select their representatives and to hold them accountable for their performance in office. It plays a vital role in communication of the society's needs and demands straight up to the political institutes. Both society and politicians are interested in a transparent and trustable procedure guaranteeing the legitimacy of the choice made. One of the mechanisms to assure fairness of the procedure is observation. Usually observers are people representing different political parties or public organizations whose primary task is to monitor the fairness of the procedure during the election day as well as the correct count of votes. Good observation prevents or at least limits the fraud and increases the legitimacy of the final result. Here we propose a computer vision algorithm which aims to count the number of unique people voting during the election day. Shortly speaking, this is a program playing a role of an electronic observer. The final number of voters counted can be compared with the turnout from the official reports. The algorithm has an advantage over traditional statistical methods for electoral fraud detection in being visual and simple: it might be difficult to explain a random average person the mathematical/statistical concepts and why the results are anomolous. Instead, demonstration of ballot staffing on a video is a clear argument that is difficult to reject. Also, the algorithm is assumptions-free in cotrast to the statistical models which always require some assumptions that might be questionable. Importantly, our algorithm does not gather any personal information since it does not rely on face recognition. We test our algorithm on short video samples available publicly on youtube. These samples were recorded from the election sights in Russia where video cameras [are installed in polling stations since 2012](https://aceproject.org/electoral-advice/archive/questions/replies/291099047).  
 
 ![Gif example](https://github.com/maxmarkov/track_and_count/blob/master/example/example_count.gif)
 
