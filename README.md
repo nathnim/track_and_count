@@ -14,6 +14,10 @@ Traditional methods used to determine electoral fraud are based on a statistical
 
 ## Important notes on implementation
 
+<p align="justify">
+This is an off-line algorithm meaning that counting is done on a recorded video sample but not on an online stream. In general, the task is highly difficult because the camera model, its settings and view can vary a lot and should be taken as it is. The algorithm is split into 3 stages to ensure its reliable work and to separate time-consuming video processing steps from relatively light post-processing. First, all urns are detected from the set of screenshots, and their coordinates are saved into a file. Since an urn is a stationary object (i.e. its position is not supposed to change in time), one can save a lot of computational time by detecting it only once at pre-processing. Moreover, such an approach enables us to avoid running expensive video processing in case the urn detection is failed. Second, we count unique voters using a set of pre-defined criteria to recognize their actions. All people in a video are tracked with a unique ID number being assigned to each person. If a person is counted, the crops of its image, the coordinates of its skeleton, and his/her appearance features are saved for each frame into a separate folder with an ID name for further postprocessing. This is the most time-consuming step, and it is important to save a maximum of relevant information for the analysis. Finally, the appearance features can be analyzed to compare the tracklets and identify the same persons. Moreover, the skeleton trajectories can be analyzed to further sort out the most anomalous voters which were counted by mistake. The algorithm uses several external codes as libraries: YOLOv5 (for object detection), DeepSORT (for tracking) and AlphaPose (for pose/skeleton estimation). The code can be easily built, run, and deployed using the Docker file provided with the repository.
+</p>
+
 Table of contents
 =================
 - [Custom object detection](#custom-detection)
@@ -39,11 +43,6 @@ object class. Finally, the inference is done on a subset of data and the result 
 **Example of urn detection with YOLOv5**
 
 <img src="example/urn_detection_inference.jpeg" width="400" class="centerImage">
-
-*NB*: Since an urn is a stationary object (i.e. its position is not supposed to change in time),
-the detection can be performed on a single (initial) video frame. Then, the urn's coordinates could
-be easily passed further to other frames without performing the detection task repeatedly. 
-
 
 <a name="tracking"></a>
 ## Tracking
