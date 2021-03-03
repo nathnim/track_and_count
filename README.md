@@ -7,7 +7,7 @@
 </p>
 
 <p align="justify">
-Traditional methods used to determine electoral fraud are based on a statistical analysis of irregularities in Vote-Turnout distributions. Among the most observed anomalies are <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2934485">coarse vote percentages</a>, zero-dispersion distribution of votes within one electorate, and a peak in the distribution of votes at high turnout rates for one candidate. Such electoral statistical methods are very developed in Russia where a large array of data is collected and analyzed by Dr. Sergey Shpilkin (rus. <a href="https://www.facebook.com/sergey.shpilkin">Сергей Шпилькин</a>). However, the statistical analysis is relatively difficult to explain to a general audience with a highly varying level of mathematical education. Our algorithm, in turn, provides visual and simple interpretable results: the demonstration of ballot staffing on a video is a clear argument that is difficult to reject. Importantly, our algorithm does not gather any personal information since it does not use face recognition technology. We test our algorithm on short video samples available publicly on YouTube. These samples were recorded by video cameras installed in polling stations <a href="https://aceproject.org/electoral-advice/archive/questions/replies/291099047">in Russia</a> where they had been installed in 2012.  
+Traditional methods used to determine electoral fraud are based on a statistical analysis of irregularities in Vote-Turnout distributions. Among the most commonly observed anomalies are <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2934485">coarse vote percentages</a>, zero-dispersion distribution of votes within one electorate, and a peak in the distribution of votes at high turnout rates for one candidate. Such electoral statistical methods are very developed in Russia where a large array of data is collected and analyzed by Dr. Sergey Shpilkin (rus. <a href="https://www.facebook.com/sergey.shpilkin">Сергей Шпилькин</a>). However, the statistical analysis is relatively difficult to explain to a general public with a highly varying level of mathematical education. Our algorithm, in turn, provides visual and simple interpretable results: the demonstration of ballot staffing on a video is a clear argument that is difficult to reject. Importantly, our algorithm does not gather any personal information since it does not use face recognition technology. We test our algorithm on short video samples available publicly on YouTube. These samples were recorded at polling stations <a href="https://aceproject.org/electoral-advice/archive/questions/replies/291099047">in Russia</a> where video cameras were installed installed in 2012.  
 </p>
 
 ![Gif example](https://github.com/maxmarkov/track_and_count/blob/master/example/example_count.gif)
@@ -15,8 +15,46 @@ Traditional methods used to determine electoral fraud are based on a statistical
 ## Important notes on implementation
 
 <p align="justify">
-This is an off-line algorithm meaning that counting is done on a recorded video sample but not on an online stream. In general, the task is highly difficult because the camera model, its settings and view can vary a lot and should be taken as it is. The algorithm is split into 3 stages to ensure its reliable work and to separate time-consuming video processing steps from relatively light post-processing. First, all urns are detected from the set of screenshots, and their coordinates are saved into a file. Since an urn is a stationary object (i.e. its position is not supposed to change in time), one can save a lot of computational time by detecting it only once at pre-processing. Moreover, such an approach enables us to avoid running expensive video processing in case the urn detection is failed. Second, we count unique voters using a set of pre-defined criteria to recognize their actions. All people in a video are tracked with a unique ID number being assigned to each person. If a person is counted, the crops of its image, the coordinates of its skeleton, and his/her appearance features are saved for each frame into a separate folder with an ID name for further postprocessing. This is the most time-consuming step, and it is important to save a maximum of relevant information for the analysis. Finally, the appearance features can be analyzed to compare the tracklets and identify the same persons. Moreover, the skeleton trajectories can be analyzed to further sort out the most anomalous voters which were counted by mistake. The algorithm uses several external codes as libraries: YOLOv5 (for object detection), DeepSORT (for tracking) and AlphaPose (for pose/skeleton estimation). The code can be easily built, run, and deployed using the Docker file provided with the repository.
+This is an offline algorithm meaning that counting is done on a recorded video sample but not on an online stream. In general, the task is highly difficult because the camera model, settings and view vary a lot and should be taken as it is. The algorithm is split into 3 stages to ensure its reliable work and to separate time-consuming video processing steps from relatively light post-processing. First, all urns are detected from the set of screenshots, and their coordinates are saved into a file. Since an urn is a stationary object (i.e. its position is not supposed to change in time), one can save a lot of computational time by detecting it only once at pre-processing. Moreover, such an approach enables us to avoid running expensive video processing in case the urn detection is failed. Second, we count unique voters using a set of pre-defined criteria to recognize their actions. All people in a video are tracked with a unique ID number being assigned to each person. If a person is counted, the crops of its image, the coordinates of its skeleton, and his/her appearance features are saved for each frame into a separate folder with an ID name for further postprocessing. This is the most time-consuming step, and it is important to save a maximum of relevant information for the analysis. Finally, the appearance features can be analyzed to compare the tracklets and identify the same persons. Moreover, the skeleton trajectories can be analyzed to further sort out the most anomalous voters which were counted by mistake. The algorithm uses several external codes as libraries: YOLOv5 (for object detection), DeepSORT (for tracking) and AlphaPose (for pose/skeleton estimation). The code can be easily built, run, and deployed using the Docker file provided with the repository.
 </p>
+
+<a name="detect-urn"></a>
+## How to detect urns.
+
+1. Extract some snapshot frames into snapshot_frames folder
+
+     python3 utils/extract_frames.py --source video_examples/election_2018_sample_1.mp4 --destination snapshot_frames --start 1 --end 10000 --step 1000
+
+2. Run the detector which saves the coordinates into .txt file in urn_coordinates folder
+
+     python3 yolov5/detect.py --weights urn_detection_yolov5/weights_best_urn.pt --img 416 --conf 0.2 --source snapshot_frames --output urn_coordinates --save-txt
+
+<a name="run-tracker"></a>
+## How to run the trackers
+
+1. Follow the installation steps described in INSTALL.md
+
+2. Run the script counting the number of unique people approaching an urn.
+
+     python3 track_yolov5_counter.py --source video_examples/election_2018_sample_1.mp4 --weights yolov5/weights/yolov5s.pt
+
+**Other scripts:**
+
+3. Run the tracker: YOLOv5 + (SORT or Deep SORT)
+
+     python3 track_yolov5_sort.py --source example/running.mp4 --weights yolov5/weights/yolov5s.pt --conf 0.4 --max_age 50 --min_hits 10 --iou_threshold 0.3
+
+     python3 track_yolov5_deepsort.py --source example/running.mp4 --weights yolov5/weights/yolov5s.pt
+
+4. Run the tracker with pose estimation
+
+     python3 track_yolov5_pose.py --source example/running.mp4 --weights yolov5/weights/yolov5s.pt
+
+5. Run the feature extractor
+
+     python3 deepsort_features.py --source example/running.mp4 --weights yolov5/weights/yolov5s.pt
+
+## Output description
 
 Table of contents
 =================
@@ -119,40 +157,8 @@ us to restore the time (instead of frame number) when the track is detected.
 - deepsort_features.py implements the feature extractor
 - folder 'theory' contains the slides with summary of theoretical approaches  
 
-<a name="detect-urn"></a>
-## How to detect urns.
-
-1. Extract some snapshot frames into snapshot_frames folder
-
-     python3 utils/extract_frames.py --source video_examples/election_2018_sample_1.mp4 --destination snapshot_frames --start 1 --end 10000 --step 1000
-
-2. Run the detector which saves the coordinates into .txt file in urn_coordinates folder
-
-     python3 yolov5/detect.py --weights urn_detection_yolov5/weights_best_urn.pt --img 416 --conf 0.2 --source snapshot_frames --output urn_coordinates --save-txt
-
-<a name="run-tracker"></a>
-## How to run the trackers
-
-1. Follow the installation steps described in INSTALL.md
-
-2. Run tracker: YOLOv5 + (SORT or Deep SORT)
-
-     python3 track_yolov5_sort.py --source example/running.mp4 --weights yolov5/weights/yolov5s.pt --conf 0.4 --max_age 50 --min_hits 10 --iou_threshold 0.3
-
-     python3 track_yolov5_deepsort.py --source example/running.mp4 --weights yolov5/weights/yolov5s.pt
-
-3. Run tracker with pose estimator
-
-     python3 track_yolov5_pose.py --source example/running.mp4 --weights yolov5/weights/yolov5s.pt
-
-4. Run the counter
-
-     python3 track_yolov5_counter.py --source video_examples/election_2018_sample_1.mp4 --weights yolov5/weights/yolov5s.pt
-
-5. Run the feature extractor
-
-     python3 deepsort_features.py --source example/running.mp4 --weights yolov5/weights/yolov5s.pt
-
+<a name="future"></a>
+## Future work and implementations.
 
 <a name="lit"></a>
 ## Literature
